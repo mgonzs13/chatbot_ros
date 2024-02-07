@@ -42,7 +42,7 @@ def generate_launch_description():
         n_predict=-1,
 
         model_repo="remyxai/stablelm-zephyr-3B_localmentor",
-        model_filename="ggml-model-q4_0.gguf",
+        model_filename="ggml-model-q4_k_m.gguf",
 
         stop="<|im_end|>",
         debug=False
