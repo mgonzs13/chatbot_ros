@@ -56,8 +56,10 @@ def generate_launch_description():
     audio_player_cmd = Node(
         package="audio_common",
         executable="audio_player_node",
+        name="player_node",
+        namespace="audio",
         output="both",
-        remappings=[("audio", "/audio/out")],
+        remappings=[("audio", "out")],
         condition=IfCondition(PythonExpression(
                 [LaunchConfiguration("launch_audio_player", default=True)]))
     )
