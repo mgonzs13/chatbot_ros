@@ -52,6 +52,7 @@ def generate_launch_description():
         package="audio_common",
         executable="audio_player_node",
         output="both",
+        remappings=[("audio", "/audio/out")]
     )
 
     tts_node_cmd = Node(
@@ -60,7 +61,8 @@ def generate_launch_description():
         output="both",
         parameters=[{
             "device": "cuda"
-        }]
+        }],
+        remappings=[("audio", "/audio/out")]
     )
 
     chatbot_node_cmd = Node(
