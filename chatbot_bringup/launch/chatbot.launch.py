@@ -21,6 +21,8 @@ from launch.actions import SetEnvironmentVariable, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 from llama_bringup.utils import create_llama_launch
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PythonExpression
 
 
 def generate_launch_description():
@@ -32,6 +34,9 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory(
                 "whisper_bringup"), "launch", "whisper.launch.py")),
+        launch_arguments={
+            "launch_audio_capturer": LaunchConfiguration("launch_audio_capturer", default=True)
+        }.items(),
     )
 
     llama_cmd = create_llama_launch(
@@ -52,7 +57,9 @@ def generate_launch_description():
         package="audio_common",
         executable="audio_player_node",
         output="both",
-        remappings=[("audio", "/audio/out")]
+        remappings=[("audio", "/audio/out")],
+        condition=IfCondition(PythonExpression(
+                [LaunchConfiguration("launch_audio_player", default=True)]))
     )
 
     tts_node_cmd = Node(
