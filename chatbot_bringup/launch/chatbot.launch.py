@@ -65,7 +65,7 @@ def generate_launch_description():
     )
 
     tts_node_cmd = Node(
-        package="audio_common",
+        package="tts_ros",
         executable="tts_node",
         output="both",
         parameters=[{

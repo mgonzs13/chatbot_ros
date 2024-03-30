@@ -9,9 +9,10 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>vault_description</depend>
-  <depend>vault_localization</depend>
-  <depend>realsense2_camera</depend>
+  <depend>audio_common</depend>
+  <depend>llama_bringup</depend>
+  <depend>whisper_bringup</depend>
+  <depend>tts_ros</depend>
 
   <depend>chatbot_ros</depend>
 
