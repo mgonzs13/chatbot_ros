@@ -43,7 +43,7 @@ def generate_launch_description():
         n_ctx=2048,
         n_batch=256,
         n_gpu_layers=33,
-        n_threads=4,
+        n_threads=1,
         n_predict=-1,
 
         model_repo="remyxai/stablelm-zephyr-3B_localmentor",

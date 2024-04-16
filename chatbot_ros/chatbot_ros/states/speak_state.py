@@ -14,7 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from simple_node import Node
 from yasmin_ros import ActionState
 from yasmin.blackboard import Blackboard
 from audio_common_msgs.action import TTS
@@ -22,10 +21,10 @@ from audio_common_msgs.action import TTS
 
 class SpeakState(ActionState):
 
-    def __init__(self, node: Node) -> None:
+    def __init__(self) -> None:
 
         super().__init__(
-            node, TTS, "/say",
+            TTS, "/say",
             self.create_tts_goal,
         )
 

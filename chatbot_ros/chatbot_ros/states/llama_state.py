@@ -14,7 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from simple_node import Node
 from yasmin_ros import ActionState
 from yasmin_ros.basic_outcomes import SUCCEED
 from yasmin.blackboard import Blackboard
@@ -23,14 +22,13 @@ from llama_msgs.action import GenerateResponse
 
 class LlamaState(ActionState):
 
-    def __init__(self, node: Node) -> None:
+    def __init__(self) -> None:
 
         super().__init__(
-            node, GenerateResponse, "/llama/generate_response",
+            GenerateResponse, "/llama/generate_response",
             self.create_llama_goal,
             result_handler=self.handle_result
         )
-        self.node = node
 
     def create_llama_goal(self, blackboard: Blackboard) -> GenerateResponse.Goal:
         goal = GenerateResponse.Goal()
@@ -52,5 +50,4 @@ You are an AI assistant that follows instruction extremely well. Help as much as
         result: GenerateResponse.Result
     ) -> str:
         blackboard.tts = result.response.text.strip()
-        self.node.get_logger().info(f"Response: {blackboard.tts}")
         return SUCCEED

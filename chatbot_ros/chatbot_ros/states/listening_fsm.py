@@ -16,8 +16,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from simple_node import Node
-
 from yasmin import StateMachine
 from yasmin_ros.basic_outcomes import SUCCEED, CANCEL, ABORT
 
@@ -28,12 +26,12 @@ from chatbot_ros.states import SpeakState
 
 class ListenFSM(StateMachine):
 
-    def __init__(self, node: Node) -> None:
+    def __init__(self) -> None:
         super().__init__(outcomes=[SUCCEED, CANCEL, ABORT])
 
         self.add_state(
             "LISTENING",
-            ListenState(node),
+            ListenState(),
             transitions={
                 SUCCEED: "CHECKING_STT",
                 ABORT: ABORT,
@@ -52,7 +50,7 @@ class ListenFSM(StateMachine):
 
         self.add_state(
             "COMPLAINING",
-            SpeakState(node),
+            SpeakState(),
             transitions={
                 SUCCEED: "LISTENING",
                 ABORT: ABORT,

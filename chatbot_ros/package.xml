@@ -12,8 +12,8 @@
   <test_depend>ament_pep257</test_depend>
   <test_depend>python3-pytest</test_depend>
 
-  <depend>simple_node</depend>
   <depend>yasmin</depend>
+  <depend>yasmin_ros</depend>
   <depend>audio_common</depend>
   <depend>llama_ros</depend>
   <depend>whisper_ros</depend>

@@ -14,7 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-from simple_node import Node
 from yasmin_ros import ActionState
 from yasmin_ros.basic_outcomes import SUCCEED
 from yasmin.blackboard import Blackboard
@@ -23,10 +22,10 @@ from whisper_msgs.action import STT
 
 class ListenState(ActionState):
 
-    def __init__(self, node: Node) -> None:
+    def __init__(self) -> None:
 
         super().__init__(
-            node, STT, "/whisper/listen",
+            STT, "/whisper/listen",
             self.create_whisper_goal,
             result_handler=self.handle_result
         )
