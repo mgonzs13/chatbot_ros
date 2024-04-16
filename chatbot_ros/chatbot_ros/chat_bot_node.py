@@ -97,8 +97,8 @@ class ChatBot:
         return SUCCEED
 
 
-def main(args=None):
-    rclpy.init(args=args)
+def main():
+    rclpy.init()
     chatbot = ChatBot()
     chatbot.execute_chat_bot()
     rclpy.shutdown()
