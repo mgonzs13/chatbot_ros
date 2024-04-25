@@ -49,7 +49,7 @@ def generate_launch_description():
         model_repo="remyxai/stablelm-zephyr-3B_localmentor",
         model_filename="ggml-model-q4_k_m.gguf",
 
-        stop="<|im_end|>",
+        stopping_words=["<|im_end|>"],
         debug=False
     )
 
