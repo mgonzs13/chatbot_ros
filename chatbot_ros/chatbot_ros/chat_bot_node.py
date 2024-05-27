@@ -62,14 +62,14 @@ class ChatBot:
             "GENERATING_RESPONSE",
             LlamaState(),
             transitions={
-                SUCCEED: "LOGGIN_RESPONSE",
+                SUCCEED: "LOGGING_RESPONSE",
                 ABORT: ABORT,
                 CANCEL: CANCEL
             }
         )
 
         self.sm.add_state(
-            "LOGGIN_RESPONSE",
+            "LOGGING_RESPONSE",
             CbState([SUCCEED], self.log_response),
             transitions={SUCCEED: "SPEAKING"}
         )
