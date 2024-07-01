@@ -46,10 +46,10 @@ def generate_launch_description():
         n_threads=1,
         n_predict=-1,
 
-        model_repo="remyxai/stablelm-zephyr-3B_localmentor",
-        model_filename="ggml-model-q4_k_m.gguf",
+        model_repo="microsoft/Phi-3-mini-4k-instruct-gguf",
+        model_filename="Phi-3-mini-4k-instruct-q4.gguf",
 
-        stopping_words=["<|im_end|>"],
+        system_prompt_type="Phi-3",
         debug=False
     )
 

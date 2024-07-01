@@ -71,29 +71,19 @@ class ChatBot:
         self.sm.add_state(
             "LOGGING_RESPONSE",
             CbState([SUCCEED], self.log_response),
-            transitions={SUCCEED: "SPEAKING"}
-        )
-
-        self.sm.add_state(
-            "SPEAKING",
-            SpeakState(),
-            transitions={
-                SUCCEED: "LISTENING",
-                ABORT: ABORT,
-                CANCEL: CANCEL
-            }
+            transitions={SUCCEED: "LISTENING"}
         )
 
         YasminViewerPub("CHAT_BOT", self.sm)
 
     def execute_chat_bot(self) -> None:
         blackboard = Blackboard()
-        blackboard.tts = "Hi, how can I help you"
+        blackboard.tts = "Hi, how can I help you?"
         self.sm(blackboard)
 
     def log_response(self, blackboard: Blackboard) -> str:
         YasminNode.get_instance().get_logger().info(
-            f"Response: {blackboard.tts}")
+            f"Response: {blackboard.response}")
         return SUCCEED
 
 

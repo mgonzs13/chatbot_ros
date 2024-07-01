@@ -14,10 +14,17 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+import threading
+
 from yasmin_ros import ActionState
+from yasmin_ros.yasmin_node import YasminNode
 from yasmin_ros.basic_outcomes import SUCCEED
 from yasmin.blackboard import Blackboard
+
+from rclpy.action import ActionClient
+from rclpy.callback_groups import ReentrantCallbackGroup
 from llama_msgs.action import GenerateResponse
+from audio_common_msgs.action import TTS
 
 
 class LlamaState(ActionState):
@@ -27,20 +34,24 @@ class LlamaState(ActionState):
         super().__init__(
             GenerateResponse, "/llama/generate_response",
             self.create_llama_goal,
-            result_handler=self.handle_result
+            result_handler=self.handle_result,
+            feedback_handler=self.handle_feedback
+        )
+
+        self._response = ""
+        self._partial_text = ""
+        self._full_response = ""
+        self._tts_end_event = threading.Event()
+
+        self._tts_client = ActionClient(
+            YasminNode.get_instance(),
+            TTS, "/say",
+            callback_group=ReentrantCallbackGroup()
         )
 
     def create_llama_goal(self, blackboard: Blackboard) -> GenerateResponse.Goal:
         goal = GenerateResponse.Goal()
-
-        promtp = f"""<|im_start|>system
-You are an AI assistant that follows instruction extremely well. Help as much as you can.<|im_end|>
-<|im_start|>user
-{blackboard.stt}<|im_end|>
-<|im_start|>assistant
-"""
-
-        goal.prompt = promtp
+        goal.prompt = blackboard.stt
         goal.reset = True
         return goal
 
@@ -49,5 +60,42 @@ You are an AI assistant that follows instruction extremely well. Help as much as
         blackboard: Blackboard,
         result: GenerateResponse.Result
     ) -> str:
-        blackboard.tts = result.response.text.strip()
+
+        blackboard.response = result.response.text
+        self._response = result.response.text
+
+        self._tts_end_event.clear()
+        self._tts_end_event.wait()
+
+        self._response = ""
+        self._partial_text = ""
+        self._full_response = ""
+
         return SUCCEED
+
+    def handle_feedback(
+        self,
+        blackboard: Blackboard,
+        feedback: GenerateResponse.Feedback
+    ) -> None:
+
+        self._partial_text += feedback.partial_response.text
+
+        if feedback.partial_response.text.strip().endswith(('.', '!', '?', ':')):
+
+            text = self._partial_text
+            self._partial_text = ""
+
+            if text.strip():
+                self.say(text)
+
+            self._full_response += text
+
+        if self._full_response == self._response:
+            self._tts_end_event.set()
+
+    def say(self, text: str) -> None:
+        goal = TTS.Goal()
+        goal.text = text
+        self._tts_client.wait_for_server()
+        self._tts_client.send_goal(goal)
