@@ -89,13 +89,22 @@ class LlamaState(ActionState):
             if text.strip():
                 self.say(text)
 
-            self._full_response += text
-
-        if self._full_response == self._response:
-            self._tts_end_event.set()
-
     def say(self, text: str) -> None:
         goal = TTS.Goal()
         goal.text = text
         self._tts_client.wait_for_server()
-        self._tts_client.send_goal(goal)
+
+        send_goal_future = self._tts_client.send_goal_async(goal)
+        send_goal_future.add_done_callback(self.goal_response_callback)
+
+    def goal_response_callback(self, future) -> None:
+        goal_handle = future.result()
+        get_result_future = goal_handle.get_result_async()
+        get_result_future.add_done_callback(self.get_result_callback)
+
+    def get_result_callback(self, future):
+        result = future.result().result
+        self._full_response += result.text
+
+        if self._full_response == self._response:
+            self._tts_end_event.set()
