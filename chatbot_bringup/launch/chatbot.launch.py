@@ -46,8 +46,8 @@ def generate_launch_description():
         n_threads=1,
         n_predict=-1,
 
-        model_repo="microsoft/Phi-3-mini-4k-instruct-gguf",
-        model_filename="Phi-3-mini-4k-instruct-q4.gguf",
+        model_repo="lmstudio-community/Phi-3-mini-4k-instruct-GGUF",
+        model_filename="Phi-3-mini-4k-instruct-IQ4_NL.gguf",
 
         system_prompt_type="Phi-3",
         debug=False
