@@ -38,9 +38,9 @@ class LlamaState(ActionState):
             feedback_handler=self.handle_feedback
         )
 
-        self._response = ""
         self._partial_text = ""
-        self._full_response = ""
+        self._total_texts = 0
+        self._say_texts = 0
         self._tts_end_event = threading.Event()
 
         self._tts_client = ActionClient(
@@ -61,15 +61,14 @@ class LlamaState(ActionState):
         result: GenerateResponse.Result
     ) -> str:
 
-        blackboard.response = result.response.text
-        self._response = result.response.text
+        self._node.get_logger().info(result.response.text)
 
         self._tts_end_event.clear()
         self._tts_end_event.wait()
 
-        self._response = ""
         self._partial_text = ""
-        self._full_response = ""
+        self._total_texts = 0
+        self._say_texts = 0
 
         return SUCCEED
 
@@ -87,6 +86,7 @@ class LlamaState(ActionState):
             self._partial_text = ""
 
             if text.strip():
+                self._total_texts += 1
                 self.say(text)
 
     def say(self, text: str) -> None:
@@ -103,8 +103,7 @@ class LlamaState(ActionState):
         get_result_future.add_done_callback(self.get_result_callback)
 
     def get_result_callback(self, future):
-        result = future.result().result
-        self._full_response += result.text
+        self._say_texts += 1
 
-        if self._full_response == self._response:
+        if self._say_texts == self._total_texts:
             self._tts_end_event.set()

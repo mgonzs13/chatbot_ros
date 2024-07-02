@@ -18,11 +18,9 @@
 
 import rclpy
 
-from yasmin import CbState
 from yasmin import Blackboard
 from yasmin import StateMachine
 from yasmin_viewer import YasminViewerPub
-from yasmin_ros.yasmin_node import YasminNode
 from yasmin_ros.basic_outcomes import SUCCEED, CANCEL, ABORT
 
 from chatbot_ros.states import ListenFSM
@@ -52,26 +50,20 @@ class ChatBot:
             "LISTENING",
             ListenFSM(),
             transitions={
-                SUCCEED: "GENERATING_RESPONSE",
+                SUCCEED: "RESPONDING",
                 ABORT: ABORT,
                 CANCEL: CANCEL
             }
         )
 
         self.sm.add_state(
-            "GENERATING_RESPONSE",
+            "RESPONDING",
             LlamaState(),
             transitions={
-                SUCCEED: "LOGGING_RESPONSE",
+                SUCCEED: "LISTENING",
                 ABORT: ABORT,
                 CANCEL: CANCEL
             }
-        )
-
-        self.sm.add_state(
-            "LOGGING_RESPONSE",
-            CbState([SUCCEED], self.log_response),
-            transitions={SUCCEED: "LISTENING"}
         )
 
         YasminViewerPub("CHAT_BOT", self.sm)
@@ -80,11 +72,6 @@ class ChatBot:
         blackboard = Blackboard()
         blackboard.tts = "Hi, how can I help you?"
         self.sm(blackboard)
-
-    def log_response(self, blackboard: Blackboard) -> str:
-        YasminNode.get_instance().get_logger().info(
-            f"Response: {blackboard.response}")
-        return SUCCEED
 
 
 def main():
