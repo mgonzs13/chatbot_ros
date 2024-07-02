@@ -84,6 +84,9 @@ def generate_launch_description():
         package="yasmin_viewer",
         executable="yasmin_viewer_node",
         output="both",
+        parameters=[{
+            "host": "0.0.0.0"
+        }],
     )
 
     ld = LaunchDescription()
