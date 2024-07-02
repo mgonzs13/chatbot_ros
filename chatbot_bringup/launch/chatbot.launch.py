@@ -42,14 +42,14 @@ def generate_launch_description():
     llama_cmd = create_llama_launch(
         n_ctx=2048,
         n_batch=256,
-        n_gpu_layers=33,
+        n_gpu_layers=30,
         n_threads=1,
         n_predict=-1,
 
-        model_repo="lmstudio-community/Phi-3-mini-4k-instruct-GGUF",
-        model_filename="Phi-3-mini-4k-instruct-IQ4_NL.gguf",
+        model_repo="remyxai/stablelm-zephyr-3B_localmentor",
+        model_filename="ggml-model-q4_k_m.gguf",
 
-        system_prompt_type="Phi-3",
+        system_prompt_type="Zephyr",
         debug=False
     )
 
