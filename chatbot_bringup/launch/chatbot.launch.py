@@ -46,10 +46,10 @@ def generate_launch_description():
         n_threads=1,
         n_predict=-1,
 
-        model_repo="mgonzs13/stablelm-zephyr-3B-localmentor-GGUF",
-        model_filename="stablelm-zephyr-3B-localmentor.Q4_K_M.gguf",
+        model_repo="duyntnet/stablelm-zephyr-3b-imatrix-GGUF",
+        model_filename="stablelm-zephyr-3b-Q4_K_M.gguf",
 
-        system_prompt_type="Zephyr",
+        system_prompt_type="StableLM-Zephyr",
         debug=False
     )
 

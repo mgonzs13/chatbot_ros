@@ -53,6 +53,7 @@ class LlamaState(ActionState):
         goal = GenerateResponse.Goal()
         goal.prompt = blackboard.stt
         goal.reset = True
+        goal.sampling_config.temp = 0.0
         return goal
 
     def handle_result(
