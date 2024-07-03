@@ -46,8 +46,8 @@ def generate_launch_description():
         n_threads=1,
         n_predict=-1,
 
-        model_repo="remyxai/stablelm-zephyr-3B_localmentor",
-        model_filename="ggml-model-q4_k_m.gguf",
+        model_repo="mgonzs13/stablelm-zephyr-3B-localmentor-GGUF",
+        model_filename="stablelm-zephyr-3B-localmentor.Q4_K_M.gguf",
 
         system_prompt_type="Zephyr",
         debug=False
