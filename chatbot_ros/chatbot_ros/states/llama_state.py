@@ -63,6 +63,8 @@ class LlamaState(ActionState):
     ) -> str:
 
         self._node.get_logger().info(result.response.text)
+        self._node.get_logger().info(
+            f"Total tokens: {len(result.response.tokens)}")
 
         self._tts_end_event.clear()
         self._tts_end_event.wait()
