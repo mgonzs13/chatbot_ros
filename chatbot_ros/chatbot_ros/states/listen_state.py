@@ -40,5 +40,5 @@ class ListenState(ActionState):
         result: STT.Result
     ) -> str:
 
-        blackboard.stt = result.text
+        blackboard.stt = result.transcription.text
         return SUCCEED
