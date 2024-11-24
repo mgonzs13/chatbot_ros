@@ -24,7 +24,8 @@ class SpeakState(ActionState):
     def __init__(self) -> None:
 
         super().__init__(
-            TTS, "/say",
+            TTS,
+            "/say",
             self.create_tts_goal,
         )
 

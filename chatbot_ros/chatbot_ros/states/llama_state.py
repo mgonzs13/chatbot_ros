@@ -32,10 +32,11 @@ class LlamaState(ActionState):
     def __init__(self) -> None:
 
         super().__init__(
-            GenerateResponse, "/llama/generate_response",
+            GenerateResponse,
+            "/llama/generate_response",
             self.create_llama_goal,
             result_handler=self.handle_result,
-            feedback_handler=self.handle_feedback
+            feedback_handler=self.handle_feedback,
         )
 
         self._partial_text = ""
@@ -45,8 +46,9 @@ class LlamaState(ActionState):
 
         self._tts_client = ActionClient(
             YasminNode.get_instance(),
-            TTS, "/say",
-            callback_group=ReentrantCallbackGroup()
+            TTS,
+            "/say",
+            callback_group=ReentrantCallbackGroup(),
         )
 
     def create_llama_goal(self, blackboard: Blackboard) -> GenerateResponse.Goal:
@@ -57,14 +59,11 @@ class LlamaState(ActionState):
         return goal
 
     def handle_result(
-        self,
-        blackboard: Blackboard,
-        result: GenerateResponse.Result
+        self, blackboard: Blackboard, result: GenerateResponse.Result
     ) -> str:
 
         self._node.get_logger().info(result.response.text)
-        self._node.get_logger().info(
-            f"Total tokens: {len(result.response.tokens)}")
+        self._node.get_logger().info(f"Total tokens: {len(result.response.tokens)}")
 
         self._tts_end_event.clear()
         self._tts_end_event.wait()
@@ -76,14 +75,12 @@ class LlamaState(ActionState):
         return SUCCEED
 
     def handle_feedback(
-        self,
-        blackboard: Blackboard,
-        feedback: GenerateResponse.Feedback
+        self, blackboard: Blackboard, feedback: GenerateResponse.Feedback
     ) -> None:
 
         self._partial_text += feedback.partial_response.text
 
-        if feedback.partial_response.text.strip().endswith(('.', '!', '?', ':')):
+        if feedback.partial_response.text.strip().endswith((".", "!", "?", ":")):
 
             text = self._partial_text
             self._partial_text = ""

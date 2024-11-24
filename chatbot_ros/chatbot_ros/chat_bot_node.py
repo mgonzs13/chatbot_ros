@@ -21,6 +21,7 @@ import rclpy
 from yasmin import Blackboard
 from yasmin import StateMachine
 from yasmin_viewer import YasminViewerPub
+from yasmin_ros.ros_logs import set_ros_loggers
 from yasmin_ros.basic_outcomes import SUCCEED, CANCEL, ABORT
 
 from chatbot_ros.states import ListenFSM
@@ -42,8 +43,8 @@ class ChatBot:
             transitions={
                 SUCCEED: "LISTENING",
                 ABORT: ABORT,
-                CANCEL: CANCEL
-            }
+                CANCEL: CANCEL,
+            },
         )
 
         self.sm.add_state(
@@ -52,8 +53,8 @@ class ChatBot:
             transitions={
                 SUCCEED: "RESPONDING",
                 ABORT: ABORT,
-                CANCEL: CANCEL
-            }
+                CANCEL: CANCEL,
+            },
         )
 
         self.sm.add_state(
@@ -62,8 +63,8 @@ class ChatBot:
             transitions={
                 SUCCEED: "LISTENING",
                 ABORT: ABORT,
-                CANCEL: CANCEL
-            }
+                CANCEL: CANCEL,
+            },
         )
 
         YasminViewerPub("CHAT_BOT", self.sm)
@@ -76,6 +77,7 @@ class ChatBot:
 
 def main():
     rclpy.init()
+    set_ros_loggers()
     chatbot = ChatBot()
     chatbot.execute_chat_bot()
     rclpy.shutdown()

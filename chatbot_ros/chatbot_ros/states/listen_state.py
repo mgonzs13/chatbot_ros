@@ -25,20 +25,17 @@ class ListenState(ActionState):
     def __init__(self) -> None:
 
         super().__init__(
-            STT, "/whisper/listen",
+            STT,
+            "/whisper/listen",
             self.create_whisper_goal,
-            result_handler=self.handle_result
+            result_handler=self.handle_result,
         )
 
     def create_whisper_goal(self, blackboard: Blackboard) -> STT.Goal:
         goal = STT.Goal()
         return goal
 
-    def handle_result(
-        self,
-        blackboard: Blackboard,
-        result: STT.Result
-    ) -> str:
+    def handle_result(self, blackboard: Blackboard, result: STT.Result) -> str:
 
         blackboard.stt = result.transcription.text
         return SUCCEED

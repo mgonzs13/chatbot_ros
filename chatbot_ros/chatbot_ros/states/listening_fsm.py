@@ -35,8 +35,8 @@ class ListenFSM(StateMachine):
             transitions={
                 SUCCEED: "CHECKING_STT",
                 ABORT: ABORT,
-                CANCEL: CANCEL
-            }
+                CANCEL: CANCEL,
+            },
         )
 
         self.add_state(
@@ -44,8 +44,8 @@ class ListenFSM(StateMachine):
             CheckSttState(),
             transitions={
                 SUCCEED: SUCCEED,
-                ABORT: "COMPLAINING"
-            }
+                ABORT: "COMPLAINING",
+            },
         )
 
         self.add_state(
@@ -54,6 +54,6 @@ class ListenFSM(StateMachine):
             transitions={
                 SUCCEED: "LISTENING",
                 ABORT: ABORT,
-                CANCEL: CANCEL
-            }
+                CANCEL: CANCEL,
+            },
         )

@@ -28,14 +28,21 @@ from launch.substitutions import LaunchConfiguration, PythonExpression
 def generate_launch_description():
 
     stdout_linebuf_envvar = SetEnvironmentVariable(
-        "RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED", "1")
+        "RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED", "1"
+    )
 
     whisper_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(get_package_share_directory(
-                "whisper_bringup"), "launch", "whisper.launch.py")),
+            os.path.join(
+                get_package_share_directory("whisper_bringup"),
+                "launch",
+                "whisper.launch.py",
+            )
+        ),
         launch_arguments={
-            "launch_audio_capturer": LaunchConfiguration("launch_audio_capturer", default=True)
+            "launch_audio_capturer": LaunchConfiguration(
+                "launch_audio_capturer", default=True
+            )
         }.items(),
     )
 
@@ -45,12 +52,10 @@ def generate_launch_description():
         n_gpu_layers=17,
         n_threads=1,
         n_predict=-1,
-
         model_repo="lmstudio-community/Llama-3.2-1B-Instruct-GGUF",
         model_filename="Llama-3.2-1B-Instruct-Q8_0.gguf",
-
         system_prompt_type="Llama-3",
-        debug=False
+        debug=False,
     )
 
     audio_player_cmd = Node(
@@ -60,18 +65,17 @@ def generate_launch_description():
         namespace="audio",
         output="both",
         remappings=[("audio", "out")],
-        condition=IfCondition(PythonExpression(
-                [LaunchConfiguration("launch_audio_player", default=True)]))
+        condition=IfCondition(
+            PythonExpression([LaunchConfiguration("launch_audio_player", default=True)])
+        ),
     )
 
     tts_node_cmd = Node(
         package="tts_ros",
         executable="tts_node",
         output="both",
-        parameters=[{
-            "device": "cuda"
-        }],
-        remappings=[("audio", "/audio/out")]
+        parameters=[{"device": "cuda"}],
+        remappings=[("audio", "/audio/out")],
     )
 
     chatbot_node_cmd = Node(
@@ -84,9 +88,7 @@ def generate_launch_description():
         package="yasmin_viewer",
         executable="yasmin_viewer_node",
         output="both",
-        parameters=[{
-            "host": "0.0.0.0"
-        }],
+        parameters=[{"host": "0.0.0.0"}],
     )
 
     ld = LaunchDescription()
