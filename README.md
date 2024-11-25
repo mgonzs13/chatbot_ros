@@ -16,9 +16,11 @@ Dependencies can be installed using [vcstool](https://github.com/dirk-thomas/vcs
 $ cd ~/ros2_ws/src
 $ git clone https://github.com/mgonzs13/chatbot_ros
 $ vcs import < chatbot_ros/dependencies.repos
-$ pip3 install -r requirements.txt
 $ cd ~/ros2_ws
 $ rosdep install --from-paths src --ignore-src -r -y
+$ pip3 install -r src/llama_ros/requirements.txt
+$ pip3 install -r src/whisper_ros/requirements.txt
+$ pip3 install -r src/tts_ros/requirements.txt
 $ colcon build --cmake-args -DGGML_CUDA=ON
 ```
 
