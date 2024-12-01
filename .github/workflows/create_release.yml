@@ -40,7 +40,7 @@ jobs:
       - name: Create GitHub release
         uses: actions/create-release@latest
         env:
-          GITHUB_TOKEN: ${{ secrets.LLAMA_ROS_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CHATBOT_ROS_GITHUB_TOKEN }}
         with:
           tag_name: "${{ env.version }}"
           release_name: "${{ env.version }}"
