@@ -21,9 +21,9 @@ RUN apt-get update \
     python3 \
     python3-pip
 RUN rosdep update && rosdep install --from-paths src --ignore-src -r -y
-RUN pip3 install -r src/llama_ros/requirements.txt
-RUN pip3 install -r src/whisper_ros/requirements.txt
-RUN pip3 install -r src/tts_ros/requirements.txt
+RUN pip3 install -r src/llama_ros/requirements.txt --use-deprecated=legacy-resolver
+RUN pip3 install -r src/whisper_ros/requirements.txt --use-deprecated=legacy-resolver
+RUN pip3 install -r src/tts_ros/requirements.txt --use-deprecated=legacy-resolver
 
 # colcon the ws
 FROM deps AS builder
