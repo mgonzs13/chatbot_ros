@@ -49,12 +49,12 @@ def generate_launch_description():
     llama_cmd = create_llama_launch(
         n_ctx=4096,
         n_batch=256,
-        n_gpu_layers=17,
+        n_gpu_layers=25,
         n_threads=1,
         n_predict=-1,
-        model_repo="lmstudio-community/Llama-3.2-1B-Instruct-GGUF",
-        model_filename="Llama-3.2-1B-Instruct-Q8_0.gguf",
-        system_prompt_type="Llama-3",
+        model_repo="Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF",
+        model_filename="qwen2.5-coder-0.5b-instruct-q4_k_m.gguf",
+        system_prompt_type="ChatML",
         debug=False,
     )
 
