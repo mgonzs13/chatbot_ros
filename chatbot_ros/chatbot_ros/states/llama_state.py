@@ -39,6 +39,7 @@ class LlamaState(ActionState):
             feedback_handler=self.handle_feedback,
         )
 
+        self._partial_text_lock = threading.Lock()
         self._partial_text = ""
         self._total_texts = 0
         self._say_texts = 0
@@ -65,10 +66,16 @@ class LlamaState(ActionState):
         self._node.get_logger().info(result.response.text)
         self._node.get_logger().info(f"Total tokens: {len(result.response.tokens)}")
 
+        with self._partial_text_lock:
+            text = self._partial_text
+            self._partial_text = ""
+            if text.strip():
+                self._total_texts += 1
+                self.say(text)
+
         self._tts_end_event.clear()
         self._tts_end_event.wait()
 
-        self._partial_text = ""
         self._total_texts = 0
         self._say_texts = 0
 
@@ -82,12 +89,13 @@ class LlamaState(ActionState):
 
         if feedback.partial_response.text.strip().endswith((".", "!", "?", ":")):
 
-            text = self._partial_text
-            self._partial_text = ""
+            with self._partial_text_lock:
+                text = self._partial_text
+                self._partial_text = ""
 
-            if text.strip():
-                self._total_texts += 1
-                self.say(text)
+                if text.strip():
+                    self._total_texts += 1
+                    self.say(text)
 
     def say(self, text: str) -> None:
         goal = TTS.Goal()
