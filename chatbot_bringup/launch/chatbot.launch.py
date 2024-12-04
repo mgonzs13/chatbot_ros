@@ -50,12 +50,11 @@ def generate_launch_description():
         n_ctx=4096,
         n_batch=256,
         n_gpu_layers=25,
-        n_threads=1,
+        n_threads=-1,
         n_predict=-1,
         model_repo="Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF",
         model_filename="qwen2.5-coder-0.5b-instruct-q4_k_m.gguf",
         system_prompt_type="ChatML",
-        debug=False,
     )
 
     audio_player_cmd = Node(
