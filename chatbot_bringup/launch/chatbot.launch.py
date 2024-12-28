@@ -1,4 +1,4 @@
-# Copyright (C) 2023  Miguel Ángel González Santamarta
+# Copyright (C) 2023 Miguel Ángel González Santamarta
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,11 +49,11 @@ def generate_launch_description():
     llama_cmd = create_llama_launch(
         n_ctx=4096,
         n_batch=256,
-        n_gpu_layers=25,
+        n_gpu_layers=33,
         n_threads=-1,
         n_predict=-1,
-        model_repo="Qwen/Qwen2.5-Coder-0.5B-Instruct-GGUF",
-        model_filename="qwen2.5-coder-0.5b-instruct-q4_k_m.gguf",
+        model_repo="QuantFactory/Hermes-2-Theta-Llama-3-8B-GGUF",
+        model_filename="Hermes-2-Theta-Llama-3-8B.Q4_K_M.gguf",
         system_prompt_type="ChatML",
     )
 
