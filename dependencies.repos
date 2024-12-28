@@ -2,20 +2,20 @@ repositories:
   yasmin:
     type: git
     url: https://github.com/uleroboticsgroup/yasmin
-    version: tags/3.0.1
+    version: tags/3.0.3
   audio_common:
     type: git
     url: https://github.com/mgonzs13/audio_common
-    version: tags/4.0.2
+    version: tags/4.0.3
   llama_ros:
     type: git
     url: https://github.com/mgonzs13/llama_ros
-    version: tags/4.1.5
+    version: tags/4.1.7
   whisper_ros:
     type: git
     url: https://github.com/mgonzs13/whisper_ros
-    version: tags/2.7.1
-  tts_ros:
+    version: tags/3.0.2
+  piper_ros:
     type: git
-    url: https://github.com/mgonzs13/tts_ros
-    version: tags/2.4.0
+    url: https://github.com/mgonzs13/piper_ros
+    version: tags/1.0.1

@@ -12,7 +12,7 @@
   <depend>audio_common</depend>
   <depend>llama_bringup</depend>
   <depend>whisper_bringup</depend>
-  <depend>tts_ros</depend>
+  <depend>piper_ros</depend>
 
   <depend>chatbot_ros</depend>
 

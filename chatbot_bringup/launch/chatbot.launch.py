@@ -17,12 +17,11 @@
 import os
 from launch_ros.actions import Node
 from launch import LaunchDescription
+from launch.substitutions import LaunchConfiguration
 from launch.actions import SetEnvironmentVariable, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory
 from llama_bringup.utils import create_llama_launch
-from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration, PythonExpression
 
 
 def generate_launch_description():
@@ -42,39 +41,39 @@ def generate_launch_description():
         launch_arguments={
             "launch_audio_capturer": LaunchConfiguration(
                 "launch_audio_capturer", default=True
-            )
+            ),
+            "model_repo": "ggerganov/whisper.cpp",
+            "model_filename": "ggml-large-v3-turbo-q5_0.bin",
         }.items(),
     )
 
     llama_cmd = create_llama_launch(
         n_ctx=4096,
         n_batch=256,
-        n_gpu_layers=33,
+        n_gpu_layers=29,
         n_threads=-1,
         n_predict=-1,
-        model_repo="QuantFactory/Hermes-2-Theta-Llama-3-8B-GGUF",
-        model_filename="Hermes-2-Theta-Llama-3-8B.Q4_K_M.gguf",
+        model_repo="bartowski/Qwen2.5-1.5B-Instruct-GGUF",
+        model_filename="Qwen2.5-1.5B-Instruct-Q4_K_M.gguf",
         system_prompt_type="ChatML",
     )
 
-    audio_player_cmd = Node(
-        package="audio_common",
-        executable="audio_player_node",
-        name="player_node",
-        namespace="audio",
-        output="both",
-        remappings=[("audio", "out")],
-        condition=IfCondition(
-            PythonExpression([LaunchConfiguration("launch_audio_player", default=True)])
+    piper_node_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("piper_bringup"),
+                "launch",
+                "piper.launch.py",
+            )
         ),
-    )
-
-    tts_node_cmd = Node(
-        package="tts_ros",
-        executable="tts_node",
-        output="both",
-        parameters=[{"device": "cuda"}],
-        remappings=[("audio", "/audio/out")],
+        launch_arguments={
+            "launch_audio_player": LaunchConfiguration(
+                "launch_audio_player", default=True
+            ),
+            "model_repo": "rhasspy/piper-voices",
+            "model_filename": "en/en_US/lessac/low/en_US-lessac-low.onnx",
+            "config_filename": "en/en_US/lessac/low/en_US-lessac-low.onnx.json",
+        }.items(),
     )
 
     chatbot_node_cmd = Node(
@@ -95,9 +94,8 @@ def generate_launch_description():
     ld.add_action(stdout_linebuf_envvar)
 
     ld.add_action(whisper_cmd)
+    ld.add_action(piper_node_cmd)
     ld.add_action(llama_cmd)
-    ld.add_action(audio_player_cmd)
-    ld.add_action(tts_node_cmd)
     ld.add_action(chatbot_node_cmd)
     ld.add_action(yasmin_viewer_cmd)
 
