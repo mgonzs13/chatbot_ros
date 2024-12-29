@@ -3,7 +3,7 @@
 <package format="3">
   <name>chatbot_bringup</name>
   <version>1.2.3</version>
-  <description>TODO: Package description</description>
+  <description>Bringup for chatbot_ros</description>
   <maintainer email="mgons@unileon.es">Miguel Ángel González Santamarta</maintainer>
   <license>GPL-3</license>
 
@@ -12,8 +12,7 @@
   <depend>audio_common</depend>
   <depend>llama_bringup</depend>
   <depend>whisper_bringup</depend>
-  <depend>piper_ros</depend>
-
+  <depend>piper_bringup</depend>
   <depend>chatbot_ros</depend>
 
   <export>
