@@ -22,7 +22,7 @@
 - [audio_common](https://github.com/mgonzs13/audio_common)[[4.0.3](https://github.com/mgonzs13/audio_common/releases/tag/4.0.3)]
 - [llama_ros](https://github.com/mgonzs13/llama_ros)[[4.1.7](https://github.com/mgonzs13/llama_ros/releases/tag/4.1.7)]
 - [whisper_ros](https://github.com/mgonzs13/whisper_ros)[[3.0.2](https://github.com/mgonzs13/whisper_ros/releases/tag/3.0.2)]
-- [piper_ros](https://github.com/mgonzs13/piper_ros)[[1.0.1](https://github.com/mgonzs13/piper_ros/releases/tag/1.0.1)]
+- [piper_ros](https://github.com/mgonzs13/piper_ros)[[1.1.0](https://github.com/mgonzs13/piper_ros/releases/tag/1.1.0)]
 
 ## Installation
 
