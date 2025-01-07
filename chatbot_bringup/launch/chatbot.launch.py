@@ -50,11 +50,11 @@ def generate_launch_description():
     llama_cmd = create_llama_launch(
         n_ctx=4096,
         n_batch=256,
-        n_gpu_layers=29,
+        n_gpu_layers=37,
         n_threads=-1,
         n_predict=-1,
-        model_repo="bartowski/Qwen2.5-1.5B-Instruct-GGUF",
-        model_filename="Qwen2.5-1.5B-Instruct-Q4_K_M.gguf",
+        model_repo="Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
+        model_filename="qwen2.5-coder-3b-instruct-q4_k_m.gguf",
         system_prompt_type="ChatML",
     )
 
@@ -72,7 +72,6 @@ def generate_launch_description():
             ),
             "model_repo": "rhasspy/piper-voices",
             "model_filename": "en/en_US/lessac/low/en_US-lessac-low.onnx",
-            "config_filename": "en/en_US/lessac/low/en_US-lessac-low.onnx.json",
         }.items(),
     )
 
