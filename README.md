@@ -1,8 +1,8 @@
 # chatbot_ros
 
-[![License: MIT](https://img.shields.io/badge/GitHub-GPL--3.0-informational)](https://opensource.org/license/gpl-3-0) [![GitHub release](https://img.shields.io/github/release/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/releases) [![Code Size](https://img.shields.io/github/languages/code-size/mgonzs13/chatbot_ros.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros?branch=main) [![Last Commit](https://img.shields.io/github/last-commit/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/commits/main) [![GitHub issues](https://img.shields.io/github/issues/mgonzs13/chatbot_ros)](https://github.com/mgonzs13/chatbot_ros/issues) [![GitHub pull requests](https://img.shields.io/github/issues-pr/mgonzs13/chatbot_ros)](https://github.com/mgonzs13/chatbot_ros/pulls) [![Contributors](https://img.shields.io/github/contributors/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/graphs/contributors) [![Python Formatter Check](https://github.com/mgonzs13/chatbot_ros/actions/workflows/python-formatter.yml/badge.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros/actions/workflows/python-formatter.yml?branch=main)
-
 <div align="center">
+
+[![License: MIT](https://img.shields.io/badge/GitHub-GPL--3.0-informational)](https://opensource.org/license/gpl-3-0) [![GitHub release](https://img.shields.io/github/release/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/releases) [![Code Size](https://img.shields.io/github/languages/code-size/mgonzs13/chatbot_ros.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros?branch=main) [![Last Commit](https://img.shields.io/github/last-commit/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/commits/main) [![GitHub issues](https://img.shields.io/github/issues/mgonzs13/chatbot_ros)](https://github.com/mgonzs13/chatbot_ros/issues) [![GitHub pull requests](https://img.shields.io/github/issues-pr/mgonzs13/chatbot_ros)](https://github.com/mgonzs13/chatbot_ros/pulls) [![Contributors](https://img.shields.io/github/contributors/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/graphs/contributors) [![Python Formatter Check](https://github.com/mgonzs13/chatbot_ros/actions/workflows/python-formatter.yml/badge.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros/actions/workflows/python-formatter.yml?branch=main)
 
 | ROS 2 Distro |                           Branch                            |                                                                                                       Build status                                                                                                        | Docker Image | Documentation |
 | :----------: | :---------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------: | ------------- |
@@ -29,19 +29,19 @@
 Dependencies can be installed using [vcstool](https://github.com/dirk-thomas/vcstool). Then, you can follow the next steps to install all tools and the chatbot:
 
 ```shell
-$ cd ~/ros2_ws/src
-$ git clone https://github.com/mgonzs13/chatbot_ros
-$ vcs import < chatbot_ros/dependencies.repos
-$ cd ~/ros2_ws
-$ rosdep install --from-paths src --ignore-src -r -y
-$ pip3 install -r src/llama_ros/requirements.txt
-$ pip3 install -r src/whisper_ros/requirements.txt
-$ pip3 install -r src/piper_ros/requirements.txt
-$ colcon build --cmake-args -DGGML_CUDA=ON
+cd ~/ros2_ws/src
+git clone https://github.com/mgonzs13/chatbot_ros
+vcs import < chatbot_ros/dependencies.repos
+cd ~/ros2_ws
+rosdep install --from-paths src --ignore-src -r -y
+pip3 install -r src/llama_ros/requirements.txt
+pip3 install -r src/whisper_ros/requirements.txt
+pip3 install -r src/piper_ros/requirements.txt
+colcon build --cmake-args -DGGML_CUDA=ON
 ```
 
 ## Usage
 
 ```shell
-$ ros2 launch chatbot_bringup chatbot.launch.py
+ros2 launch chatbot_bringup chatbot.launch.py
 ```
