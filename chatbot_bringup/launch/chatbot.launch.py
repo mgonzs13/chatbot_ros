@@ -72,6 +72,8 @@ def generate_launch_description():
             ),
             "model_repo": "rhasspy/piper-voices",
             "model_filename": "en/en_US/lessac/low/en_US-lessac-low.onnx",
+            "config_model_repo": "rhasspy/piper-voices",
+            "config_model_filename": "en/en_US/lessac/low/en_US-lessac-low.onnx.json",
         }.items(),
     )
 
