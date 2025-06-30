@@ -18,11 +18,11 @@
 
 ## Dependencies
 
-- [yasmin](https://github.com/uleroboticsgroup/yasmin)[[3.2.0](https://github.com/uleroboticsgroup/yasmin/releases/tag/3.2.0)]
-- [audio_common](https://github.com/mgonzs13/audio_common)[[4.0.5](https://github.com/mgonzs13/audio_common/releases/tag/4.0.5)]
-- [llama_ros](https://github.com/mgonzs13/llama_ros)[[5.0.1](https://github.com/mgonzs13/llama_ros/releases/tag/5.0.1)]
-- [whisper_ros](https://github.com/mgonzs13/whisper_ros)[[3.2.1](https://github.com/mgonzs13/whisper_ros/releases/tag/3.2.1)]
-- [piper_ros](https://github.com/mgonzs13/piper_ros)[[1.3.3](https://github.com/mgonzs13/piper_ros/releases/tag/1.3.3)]
+- [yasmin](https://github.com/uleroboticsgroup/yasmin)[[3.3.0](https://github.com/uleroboticsgroup/yasmin/releases/tag/3.3.0)]
+- [audio_common](https://github.com/mgonzs13/audio_common)[[4.0.6](https://github.com/mgonzs13/audio_common/releases/tag/4.0.6)]
+- [llama_ros](https://github.com/mgonzs13/llama_ros)[[5.2.0](https://github.com/mgonzs13/llama_ros/releases/tag/5.2.0)]
+- [whisper_ros](https://github.com/mgonzs13/whisper_ros)[[3.3.0](https://github.com/mgonzs13/whisper_ros/releases/tag/3.3.0)]
+- [piper_ros](https://github.com/mgonzs13/piper_ros)[[1.3.4](https://github.com/mgonzs13/piper_ros/releases/tag/1.3.4)]
 
 ## Installation
 
@@ -35,8 +35,6 @@ vcs import < chatbot_ros/dependencies.repos
 cd ~/ros2_ws
 rosdep install --from-paths src --ignore-src -r -y
 pip3 install -r src/llama_ros/requirements.txt
-pip3 install -r src/whisper_ros/requirements.txt
-pip3 install -r src/piper_ros/requirements.txt
 colcon build --cmake-args -DGGML_CUDA=ON
 ```
 
