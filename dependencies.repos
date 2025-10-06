@@ -6,7 +6,7 @@ repositories:
   audio_common:
     type: git
     url: https://github.com/mgonzs13/audio_common
-    version: tags/4.0.6
+    version: tags/4.0.7
   llama_ros:
     type: git
     url: https://github.com/mgonzs13/llama_ros
