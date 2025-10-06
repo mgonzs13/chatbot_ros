@@ -50,7 +50,7 @@ def generate_launch_description():
     llama_cmd = create_llama_launch(
         n_ctx=4096,
         n_batch=256,
-        n_gpu_layers=37,
+        n_gpu_layers=-1,
         n_threads=-1,
         n_predict=-1,
         model_repo="Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
