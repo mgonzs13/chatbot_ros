@@ -15,7 +15,7 @@ setup(
     maintainer="miguel",
     maintainer_email="mgons@unileon.es",
     description="TODO: Package description",
-    license="GPL-3",
+    license="GPL-3.0",
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
