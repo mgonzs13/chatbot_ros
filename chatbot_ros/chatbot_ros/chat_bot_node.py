@@ -67,7 +67,7 @@ class ChatBot:
             },
         )
 
-        YasminViewerPub("CHAT_BOT", self.sm)
+        YasminViewerPub(self.sm, "CHAT_BOT")
 
     def execute_chat_bot(self) -> None:
         blackboard = Blackboard()

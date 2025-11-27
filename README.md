@@ -18,11 +18,11 @@
 
 ## Dependencies
 
-- [yasmin](https://github.com/uleroboticsgroup/yasmin)[[3.4.0](https://github.com/uleroboticsgroup/yasmin/releases/tag/3.4.0)]
+- [yasmin](https://github.com/uleroboticsgroup/yasmin)[[4.0.0](https://github.com/uleroboticsgroup/yasmin/releases/tag/4.0.0)]
 - [audio_common](https://github.com/mgonzs13/audio_common)[[4.0.7](https://github.com/mgonzs13/audio_common/releases/tag/4.0.7)]
 - [llama_ros](https://github.com/mgonzs13/llama_ros)[[5.3.3](https://github.com/mgonzs13/llama_ros/releases/tag/5.3.3)]
-- [whisper_ros](https://github.com/mgonzs13/whisper_ros)[[3.2.3](https://github.com/mgonzs13/whisper_ros/releases/tag/3.2.3)]
-- [piper_ros](https://github.com/mgonzs13/piper_ros)[[1.3.5](https://github.com/mgonzs13/piper_ros/releases/tag/1.3.5)]
+- [whisper_ros](https://github.com/mgonzs13/whisper_ros)[[3.2.4](https://github.com/mgonzs13/whisper_ros/releases/tag/3.2.4)]
+- [piper_ros](https://github.com/mgonzs13/piper_ros)[[1.3.6](https://github.com/mgonzs13/piper_ros/releases/tag/1.3.6)]
 
 ## Installation
 
