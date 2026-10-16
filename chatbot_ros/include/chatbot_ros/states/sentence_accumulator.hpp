@@ -1,0 +1,38 @@
+// Copyright (C) 2023 Miguel Ángel González Santamarta
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#ifndef CHATBOT_ROS__STATES__SENTENCE_ACCUMULATOR_HPP_
+#define CHATBOT_ROS__STATES__SENTENCE_ACCUMULATOR_HPP_
+
+#include <optional>
+#include <string>
+#include <vector>
+
+namespace chatbot_ros {
+
+class SentenceAccumulator {
+public:
+  std::vector<std::string> add(const std::string &text);
+  std::optional<std::string> flush();
+
+private:
+  static bool ends_with_punctuation(const std::string &text);
+
+  std::string buffer_;
+};
+
+} // namespace chatbot_ros
+
+#endif // CHATBOT_ROS__STATES__SENTENCE_ACCUMULATOR_HPP_

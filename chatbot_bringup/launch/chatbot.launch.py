@@ -15,13 +15,13 @@
 
 
 import os
-from launch_ros.actions import Node
-from launch import LaunchDescription
-from launch.substitutions import LaunchConfiguration
-from launch.actions import SetEnvironmentVariable, IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+
 from ament_index_python.packages import get_package_share_directory
-from llama_bringup.utils import create_llama_launch
+from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
@@ -42,20 +42,24 @@ def generate_launch_description():
             "launch_audio_capturer": LaunchConfiguration(
                 "launch_audio_capturer", default=True
             ),
-            "model_repo": "ggerganov/whisper.cpp",
-            "model_filename": "ggml-large-v3-turbo-q5_0.bin",
         }.items(),
     )
 
-    llama_cmd = create_llama_launch(
-        n_ctx=4096,
-        n_batch=256,
-        n_gpu_layers=-1,
-        n_threads=-1,
-        n_predict=-1,
-        model_repo="Qwen/Qwen2.5-Coder-3B-Instruct-GGUF",
-        model_filename="qwen2.5-coder-3b-instruct-q4_k_m.gguf",
-        system_prompt_type="ChatML",
+    llama_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("llama_bringup"),
+                "launch",
+                "base.launch.py",
+            )
+        ),
+        launch_arguments={
+            "params_file": os.path.join(
+                get_package_share_directory("chatbot_bringup"),
+                "config",
+                "llama.yaml",
+            ),
+        }.items(),
     )
 
     piper_node_cmd = IncludeLaunchDescription(
@@ -70,10 +74,6 @@ def generate_launch_description():
             "launch_audio_player": LaunchConfiguration(
                 "launch_audio_player", default=True
             ),
-            "model_repo": "rhasspy/piper-voices",
-            "model_filename": "en/en_US/lessac/low/en_US-lessac-low.onnx",
-            "config_model_repo": "rhasspy/piper-voices",
-            "config_model_filename": "en/en_US/lessac/low/en_US-lessac-low.onnx.json",
         }.items(),
     )
 

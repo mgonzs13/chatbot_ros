@@ -18,11 +18,11 @@
 
 ## Dependencies
 
-- [yasmin](https://github.com/uleroboticsgroup/yasmin)[[4.0.0](https://github.com/uleroboticsgroup/yasmin/releases/tag/4.0.0)]
-- [audio_common](https://github.com/mgonzs13/audio_common)[[4.0.7](https://github.com/mgonzs13/audio_common/releases/tag/4.0.7)]
-- [llama_ros](https://github.com/mgonzs13/llama_ros)[[5.3.3](https://github.com/mgonzs13/llama_ros/releases/tag/5.3.3)]
-- [whisper_ros](https://github.com/mgonzs13/whisper_ros)[[3.2.4](https://github.com/mgonzs13/whisper_ros/releases/tag/3.2.4)]
-- [piper_ros](https://github.com/mgonzs13/piper_ros)[[1.3.6](https://github.com/mgonzs13/piper_ros/releases/tag/1.3.6)]
+- [yasmin](https://github.com/uleroboticsgroup/yasmin)[[6.1.2](https://github.com/uleroboticsgroup/yasmin/releases/tag/6.1.2)]
+- [audio_common](https://github.com/mgonzs13/audio_common)[[4.0.11](https://github.com/mgonzs13/audio_common/releases/tag/4.0.11)]
+- [llama_ros](https://github.com/mgonzs13/llama_ros)[[6.2.2](https://github.com/mgonzs13/llama_ros/releases/tag/6.2.2)]
+- [whisper_ros](https://github.com/mgonzs13/whisper_ros)[[4.0.10](https://github.com/mgonzs13/whisper_ros/releases/tag/4.0.10)]
+- [piper_ros](https://github.com/mgonzs13/piper_ros)[[2.0.5](https://github.com/mgonzs13/piper_ros/releases/tag/2.0.5)]
 
 ## Installation
 

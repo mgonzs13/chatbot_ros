@@ -1,0 +1,42 @@
+// Copyright (C) 2023 Miguel Ángel González Santamarta
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#ifndef CHATBOT_ROS__STATES__LISTEN_STATE_HPP_
+#define CHATBOT_ROS__STATES__LISTEN_STATE_HPP_
+
+#include <string>
+
+#include "whisper_msgs/action/stt.hpp"
+#include "yasmin/blackboard.hpp"
+#include "yasmin_ros/action_state.hpp"
+
+namespace chatbot_ros {
+
+class ListenState : public yasmin_ros::ActionState<whisper_msgs::action::STT> {
+public:
+  ListenState();
+
+private:
+  whisper_msgs::action::STT::Goal
+  create_goal_handler(yasmin::Blackboard::SharedPtr blackboard);
+
+  std::string
+  result_handler(yasmin::Blackboard::SharedPtr blackboard,
+                 whisper_msgs::action::STT::Result::SharedPtr result);
+};
+
+} // namespace chatbot_ros
+
+#endif // CHATBOT_ROS__STATES__LISTEN_STATE_HPP_
