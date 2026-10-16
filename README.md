@@ -36,7 +36,6 @@ git clone https://github.com/mgonzs13/chatbot_ros
 vcs import < chatbot_ros/dependencies.repos
 cd ~/ros2_ws
 rosdep install --from-paths src --ignore-src -r -y
-pip3 install -r src/llama_ros/requirements.txt
 colcon build --cmake-args -DGGML_CUDA=ON
 ```
 
