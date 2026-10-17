@@ -364,8 +364,10 @@ TEST_F(ChatbotFsmTest, ListenFsmHappyPath) {
 
 TEST_F(ChatbotFsmTest, ListenFsmFiltersNoiseTranscriptions) {
   auto tts_server = this->make_tts_server();
-  auto stt_server = this->make_stt_server(
-      std::vector<std::string>{"[BLANK_AUDIO]", "hello robot"});
+  // "[BLANK_AUDIO]" is removed by the structural filter and the hallucinated
+  // phrase by the ignored phrases list; both must end up as "no speech".
+  auto stt_server = this->make_stt_server(std::vector<std::string>{
+      "[BLANK_AUDIO]", "Thank you for watching!", "hello robot"});
 
   chatbot_ros::ListenFSM fsm;
   auto blackboard = yasmin::Blackboard::make_shared();
@@ -374,7 +376,7 @@ TEST_F(ChatbotFsmTest, ListenFsmFiltersNoiseTranscriptions) {
   EXPECT_EQ(outcome, yasmin_ros::basic_outcomes::SUCCEED);
   EXPECT_EQ(blackboard->get<std::string>("stt"), "hello robot");
   const auto spoken = tts_server->get_spoken_texts();
-  ASSERT_EQ(spoken.size(), 1u);
+  ASSERT_EQ(spoken.size(), 2u);
 }
 
 TEST_F(ChatbotFsmTest, ListenFsmRecoversFromRejectedGoals) {
@@ -527,6 +529,30 @@ TEST_F(ChatbotFsmTest, RespondingConcurrenceReportsInterruption) {
   ASSERT_TRUE(blackboard->contains("stt"));
   EXPECT_EQ(blackboard->get<std::string>("stt"), "actually stop");
   EXPECT_GE(tts_server->get_canceled_count(), 1);
+}
+
+TEST_F(ChatbotFsmTest, RespondingConcurrenceIgnoresOwnVoiceEcho) {
+  // The robot speaks and the microphone picks it up: Whisper transcribes
+  // the robot's own sentence. That must not interrupt the response.
+  const std::string sentence =
+      "Once upon a time there was a little robot in a factory.";
+  auto tts_server = this->make_tts_server(1500ms);
+  auto stt_server = this->make_stt_server(
+      std::vector<std::string>{sentence}, 0ms,
+      [tts_server]() { return !tts_server->get_spoken_texts().empty(); });
+  auto generate_server = this->make_generate_server(
+      std::vector<std::string>{sentence}, sentence, false);
+
+  auto pipeline = std::make_shared<chatbot_ros::SpeechPipeline>();
+  auto concurrence = chatbot_ros::create_responding_concurrence(pipeline);
+
+  auto blackboard = yasmin::Blackboard::make_shared();
+  blackboard->set<std::string>("stt", "tell me a story");
+  const std::string outcome = (*concurrence)(blackboard);
+
+  EXPECT_EQ(outcome, yasmin_ros::basic_outcomes::SUCCEED);
+  EXPECT_EQ(blackboard->get<std::string>("stt"), "tell me a story");
+  EXPECT_EQ(tts_server->get_canceled_count(), 0);
 }
 
 TEST_F(ChatbotFsmTest, RespondingConcurrenceStopsListenerWhenSpeakingEnds) {

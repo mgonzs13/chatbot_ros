@@ -33,11 +33,14 @@ public:
   explicit TranscriptFilter(
       std::vector<std::string> ignored_phrases = std::vector<std::string>());
 
-  /// Removes non-speech annotations and normalizes whitespace.
-  std::string clean(const std::string &raw) const;
+  /// Returns the cleaned transcription, or an empty string when the raw
+  /// transcription is noise or a hallucination. This is what callers
+  /// should use.
+  std::string clean_or_empty(const std::string &raw) const;
 
-  /// True when the raw transcription does not contain usable speech.
-  bool is_noise(const std::string &raw) const;
+  /// Removes non-speech annotations and normalizes whitespace, without
+  /// applying the ignored phrases. Mostly useful for debugging and tests.
+  std::string clean(const std::string &raw) const;
 
 private:
   std::vector<std::string> ignored_phrases_;

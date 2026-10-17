@@ -142,15 +142,15 @@ std::string TranscriptFilter::clean(const std::string &raw) const {
   return result;
 }
 
-bool TranscriptFilter::is_noise(const std::string &raw) const {
+std::string TranscriptFilter::clean_or_empty(const std::string &raw) const {
   const std::string cleaned = this->clean(raw);
   if (cleaned.empty()) {
-    return true;
+    return "";
   }
 
   const std::string normalized = normalize(cleaned);
   if (normalized.size() < 2) {
-    return true;
+    return "";
   }
 
   for (const std::string &phrase : this->ignored_phrases_) {
@@ -158,19 +158,19 @@ bool TranscriptFilter::is_noise(const std::string &raw) const {
       continue;
     }
     if (normalized == phrase) {
-      return true;
+      return "";
     }
     // The utterance contains a known hallucination.
     if (normalized.find(phrase) != std::string::npos) {
-      return true;
+      return "";
     }
     // "thank you" inside "thank you for watching" is still a hallucination.
     if (normalized.size() >= 8 &&
         phrase.find(normalized) != std::string::npos) {
-      return true;
+      return "";
     }
   }
-  return false;
+  return cleaned;
 }
 
 } // namespace text

@@ -32,6 +32,15 @@ std::vector<std::string> tokenize(const std::string &text);
 /// a longer reference scores high.
 double similarity(const std::string &candidate, const std::string &reference);
 
+/// Longest common subsequence ratio in [0, 1]: the fraction of
+/// `candidate` words that also appear in `reference` in the same order.
+///
+/// Unlike `similarity`, word order matters and extra inserted or missing
+/// words are tolerated, which makes it well suited to compare a Whisper
+/// transcription with the sentence it was transcribed from.
+double subsequence_similarity(const std::string &candidate,
+                              const std::string &reference);
+
 } // namespace text
 } // namespace chatbot_ros
 

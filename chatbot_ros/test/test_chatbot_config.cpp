@@ -39,7 +39,8 @@ TEST(ChatbotConfig, DefaultsMatchParameterDefaults) {
   EXPECT_TRUE(config.interrupt_enabled);
   EXPECT_FALSE(config.memory_enabled);
   EXPECT_EQ(config.history_max_turns, 8);
-  EXPECT_GT(config.interrupt_similarity_threshold, 0.0);
+  EXPECT_DOUBLE_EQ(config.interrupt_similarity_threshold, 0.65);
+  EXPECT_FALSE(config.interrupt_always_words.empty());
 }
 
 TEST(ChatbotConfig, ParameterOverridesAreApplied) {
@@ -54,6 +55,8 @@ TEST(ChatbotConfig, ParameterOverridesAreApplied) {
        rclcpp::Parameter("history.max_turns", 3),
        rclcpp::Parameter("interrupt.enabled", false),
        rclcpp::Parameter("interrupt.similarity_threshold", 0.5),
+       rclcpp::Parameter("interrupt.always_words",
+                         std::vector<std::string>{"halt", "freeze"}),
        rclcpp::Parameter("memory.enabled", true),
        rclcpp::Parameter("memory.service", "/embeddings/generate"),
        rclcpp::Parameter("memory.retrieve_k", 5),
@@ -73,6 +76,9 @@ TEST(ChatbotConfig, ParameterOverridesAreApplied) {
   EXPECT_EQ(config.history_max_turns, 3);
   EXPECT_FALSE(config.interrupt_enabled);
   EXPECT_DOUBLE_EQ(config.interrupt_similarity_threshold, 0.5);
+  ASSERT_EQ(config.interrupt_always_words.size(), 2u);
+  EXPECT_EQ(config.interrupt_always_words[0], "halt");
+  EXPECT_EQ(config.interrupt_always_words[1], "freeze");
   EXPECT_TRUE(config.memory_enabled);
   EXPECT_EQ(config.memory_service, "/embeddings/generate");
   EXPECT_EQ(config.memory_retrieve_k, 5);

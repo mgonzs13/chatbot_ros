@@ -15,9 +15,21 @@
 
 #include "chatbot_ros/echo_guard.hpp"
 
+#include <algorithm>
+
 #include "chatbot_ros/text/text_similarity.hpp"
 
 namespace chatbot_ros {
+
+namespace {
+/// Transcriptions with at most this many words are checked against the
+/// always-interrupt command words.
+constexpr std::size_t kAlwaysWordMaxTokens = 3;
+
+/// Single words are only considered an echo when they are at least this
+/// long, so short real utterances ("stop", "no") always interrupt.
+constexpr std::size_t kMinEchoWordLength = 4;
+} // namespace
 
 void EchoGuard::add_spoken_sentence(const std::string &sentence) {
   std::lock_guard<std::mutex> lock(this->mutex_);
@@ -32,16 +44,46 @@ void EchoGuard::clear() {
   this->spoken_.clear();
 }
 
-bool EchoGuard::is_echo(const std::string &candidate, double threshold) const {
+bool EchoGuard::is_echo(const std::string &candidate, double threshold,
+                        const std::vector<std::string> &always_words) const {
   const std::vector<std::string> tokens = text::tokenize(candidate);
-  if (tokens.size() < 2) {
-    // Single words are more likely a command ("stop", "wait") than echo.
+  if (tokens.empty()) {
     return false;
   }
 
+  // Short commands such as "stop" or "be quiet" always interrupt, even if
+  // their words show up in the robot's own speech.
+  if (tokens.size() <= kAlwaysWordMaxTokens) {
+    for (const std::string &token : tokens) {
+      if (std::find(always_words.begin(), always_words.end(), token) !=
+          always_words.end()) {
+        return false;
+      }
+    }
+  }
+
   std::lock_guard<std::mutex> lock(this->mutex_);
+
+  if (tokens.size() < 2) {
+    // A single word is likely a fragment of the sentence that is being
+    // spoken (e.g. Whisper only caught "Sure." from "Sure, I can do that").
+    if (tokens[0].size() < kMinEchoWordLength) {
+      return false;
+    }
+    for (const std::string &spoken : this->spoken_) {
+      const std::vector<std::string> spoken_tokens = text::tokenize(spoken);
+      if (std::find(spoken_tokens.begin(), spoken_tokens.end(), tokens[0]) !=
+          spoken_tokens.end()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   for (const std::string &spoken : this->spoken_) {
-    if (text::similarity(candidate, spoken) >= threshold) {
+    // Order-preserving match: tolerates Whisper dropping words from the
+    // robot's speech or hallucinating extra words at the end.
+    if (text::subsequence_similarity(candidate, spoken) >= threshold) {
       return true;
     }
   }

@@ -20,12 +20,17 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <vector>
 
 namespace chatbot_ros {
 
 /// Keeps the sentences the robot is speaking so transcriptions of the
-/// robot's own voice (picked up by the microphone) can be told apart from
-/// real user interruptions.
+/// robot's own voice (picked up by the microphone and transcribed by
+/// Whisper) can be told apart from real user interruptions.
+///
+/// A transcription is considered an echo when it mostly repeats, in order,
+/// the words of a recently spoken sentence. Missing words, extra
+/// hallucinated words and partial fragments are tolerated.
 class EchoGuard {
 public:
   using SharedPtr = std::shared_ptr<EchoGuard>;
@@ -37,9 +42,12 @@ public:
   void clear();
 
   /// True when the candidate transcription looks like an echo of one of
-  /// the recently spoken sentences. Short candidates (single words) are
-  /// never considered echoes so commands like "stop" always interrupt.
-  bool is_echo(const std::string &candidate, double threshold) const;
+  /// the recently spoken sentences.
+  ///
+  /// `always_words` are command words (e.g. "stop") that always count as a
+  /// real interruption when they show up in a short transcription.
+  bool is_echo(const std::string &candidate, double threshold,
+               const std::vector<std::string> &always_words = {}) const;
 
 private:
   static constexpr std::size_t kMaxSentences = 8;

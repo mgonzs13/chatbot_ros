@@ -58,12 +58,18 @@ If the user starts talking, the ongoing response is stopped immediately and
 the new request is answered, so there is no need to wait for the robot to
 finish speaking.
 
-Since the microphone also picks up the robot's own voice, transcriptions are
-compared with the sentences being spoken. Transcriptions that look like an
-echo of the robot's own voice are ignored. If the robot interrupts itself
-anyway, raise `interrupt.similarity_threshold`; if real interruptions are
-ignored, lower it. Single words such as "stop" always count as an
-interruption.
+Since the microphone also picks up the robot's own voice, every
+transcription is compared with the sentences the robot recently spoke:
+fragments, missing words and Whisper hallucinations at the end of a
+transcript are tolerated and still recognized as the robot's own voice.
+Transcriptions that match a recently spoken sentence are ignored, so the
+robot does not interrupt itself.
+
+- `interrupt.similarity_threshold` (default `0.65`): raise it if the robot
+  still reacts to its own voice, lower it if real interruptions are ignored.
+- `interrupt.always_words`: short commands such as "stop", "wait" or "no"
+  always count as a real interruption, even if the robot used those words
+  recently.
 
 ### Conversation memory
 
@@ -114,7 +120,8 @@ and can be overridden at launch or on the command line (e.g.
 | `llm.temperature`                | double   | `0.4`                            | Sampling temperature for the chat completions                       |
 | `history.max_turns`              | int      | `8`                              | User/assistant turn pairs kept in the short-term memory             |
 | `interrupt.enabled`              | bool     | `true`                           | Listen for user speech while speaking                               |
-| `interrupt.similarity_threshold` | double   | `0.8`                            | Echo similarity above which an interruption is ignored              |
+| `interrupt.similarity_threshold` | double   | `0.65`                           | Echo similarity above which an interruption is ignored              |
+| `interrupt.always_words`         | string[] | stop, wait, quiet, cancel, ...   | Short commands that always interrupt, even if recently spoken       |
 | `memory.enabled`                 | bool     | `false`                          | Enable the embeddings-based long-term memory                        |
 | `memory.service`                 | string   | `/embedding/generate_embeddings` | Embeddings service used by the long-term memory                     |
 | `memory.storage_file`            | string   | `$HOME/.cache/chatbot_ros/...`   | JSON file where memories are persisted                              |

@@ -17,7 +17,11 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace chatbot_ros {
 namespace text {
@@ -68,6 +72,33 @@ double similarity(const std::string &candidate, const std::string &reference) {
       static_cast<double>(candidate_tokens.size() + reference_tokens.size() -
                           intersection);
   return std::max(containment, jaccard);
+}
+
+double subsequence_similarity(const std::string &candidate,
+                              const std::string &reference) {
+  const std::vector<std::string> candidate_tokens = tokenize(candidate);
+  const std::vector<std::string> reference_tokens = tokenize(reference);
+  if (candidate_tokens.empty() || reference_tokens.empty()) {
+    return 0.0;
+  }
+
+  // Longest common subsequence over tokens.
+  std::vector<std::size_t> previous(reference_tokens.size() + 1, 0);
+  std::vector<std::size_t> current(reference_tokens.size() + 1, 0);
+  for (const std::string &candidate_token : candidate_tokens) {
+    for (std::size_t j = 1; j <= reference_tokens.size(); j++) {
+      if (candidate_token == reference_tokens[j - 1]) {
+        current[j] = previous[j - 1] + 1;
+      } else {
+        current[j] = std::max(previous[j], current[j - 1]);
+      }
+    }
+    std::swap(previous, current);
+    std::fill(current.begin(), current.end(), 0);
+  }
+
+  return static_cast<double>(previous[reference_tokens.size()]) /
+         static_cast<double>(candidate_tokens.size());
 }
 
 } // namespace text

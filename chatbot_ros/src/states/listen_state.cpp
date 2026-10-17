@@ -73,7 +73,7 @@ std::string ListenState::result_handler(
     yasmin::Blackboard::SharedPtr blackboard,
     whisper_msgs::action::STT::Result::SharedPtr result) {
   const std::string transcript =
-      this->filter_.clean(result->transcription.text);
+      this->filter_.clean_or_empty(result->transcription.text);
   if (transcript != result->transcription.text) {
     RCLCPP_DEBUG(this->node_->get_logger(),
                  "Filtered transcription: '%s' -> '%s'",

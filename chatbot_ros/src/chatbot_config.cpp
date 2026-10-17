@@ -55,6 +55,8 @@ ChatbotConfig::ChatbotConfig() {
   this->system_prompt = default_system_prompt();
   this->retry_messages = default_retry_messages();
   this->stt_ignored_phrases = default_stt_ignored_phrases();
+  this->interrupt_always_words = {"stop",  "wait",   "quiet", "cancel",
+                                  "pause", "enough", "no"};
 }
 
 const char *default_system_prompt() {
@@ -121,6 +123,8 @@ ChatbotConfig ChatbotConfig::from_node(const rclcpp::Node::SharedPtr &node) {
   config.interrupt_similarity_threshold =
       declare_or_get<double>(node, "interrupt.similarity_threshold",
                              config.interrupt_similarity_threshold);
+  config.interrupt_always_words = declare_or_get<std::vector<std::string>>(
+      node, "interrupt.always_words", config.interrupt_always_words);
 
   config.memory_enabled =
       declare_or_get<bool>(node, "memory.enabled", config.memory_enabled);

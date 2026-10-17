@@ -30,6 +30,9 @@ namespace {
 /// Maximum consecutive STT failures before giving up for this cycle.
 constexpr int kMaxFailures = 3;
 constexpr auto kRetryDelay = 100ms;
+/// Small pause before listening again after noise or an echo, so a
+/// misbehaving STT stream cannot turn into a busy loop.
+constexpr auto kNoiseRetryDelay = 100ms;
 } // namespace
 
 InterruptListeningState::InterruptListeningState(
@@ -103,20 +106,24 @@ InterruptListeningState::execute(yasmin::Blackboard::SharedPtr blackboard) {
     }
     failures = 0;
 
-    const std::string transcript = this->filter_.clean(this->last_transcript_);
+    const std::string transcript =
+        this->filter_.clean_or_empty(this->last_transcript_);
     if (transcript.empty()) {
       RCLCPP_DEBUG(this->node_->get_logger(),
                    "Interrupt listener ignored non-speech transcript '%s'",
                    this->last_transcript_.c_str());
+      std::this_thread::sleep_for(kNoiseRetryDelay);
       continue;
     }
 
     if (this->echo_guard_ &&
-        this->echo_guard_->is_echo(
-            transcript, this->config_.interrupt_similarity_threshold)) {
+        this->echo_guard_->is_echo(transcript,
+                                   this->config_.interrupt_similarity_threshold,
+                                   this->config_.interrupt_always_words)) {
       RCLCPP_DEBUG(this->node_->get_logger(),
                    "Ignoring echo of the robot's own voice: '%s'",
                    transcript.c_str());
+      std::this_thread::sleep_for(kNoiseRetryDelay);
       continue;
     }
 
