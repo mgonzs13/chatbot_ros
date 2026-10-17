@@ -54,7 +54,7 @@
     # `ros2 launch chatbot_bringup chatbot.launch.py memory:=true`.
     memory:
       enabled: false
-      service: "/embedding/generate_embeddings"
+      service: "/llama/generate_embeddings"
       # Empty path uses $HOME/.cache/chatbot_ros/memory.json
       storage_file: ""
       retrieve_k: 3

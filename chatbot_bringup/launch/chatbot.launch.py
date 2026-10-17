@@ -50,6 +50,24 @@ def generate_launch_description():
         description="Launch an embedding model for the long-term memory",
     )
 
+    whisper_params_file = LaunchConfiguration(
+        "whisper_params_file",
+        default=os.path.join(
+            get_package_share_directory("chatbot_bringup"),
+            "config",
+            "whisper.yaml",
+        ),
+    )
+
+    llama_params_file = LaunchConfiguration(
+        "llama_params_file",
+        default=os.path.join(
+            get_package_share_directory("chatbot_bringup"),
+            "config",
+            "llama.yaml",
+        ),
+    )
+
     memory_params_file = LaunchConfiguration(
         "memory_params_file",
         default=os.path.join(
@@ -71,6 +89,7 @@ def generate_launch_description():
             "launch_audio_capturer": LaunchConfiguration(
                 "launch_audio_capturer", default=True
             ),
+            "whisper_params_file": whisper_params_file,
         }.items(),
     )
 
@@ -83,11 +102,9 @@ def generate_launch_description():
             )
         ),
         launch_arguments={
-            "params_file": os.path.join(
-                get_package_share_directory("chatbot_bringup"),
-                "config",
-                "llama.yaml",
-            ),
+            "params_file": llama_params_file,
+            "node_name": "llama_node",
+            "namespace": "llama",
         }.items(),
     )
 
@@ -101,8 +118,8 @@ def generate_launch_description():
         ),
         launch_arguments={
             "params_file": memory_params_file,
-            "node_name": "llama_node",
-            "namespace": "embedding",
+            "node_name": "llama_embedding_node",
+            "namespace": "llama",
         }.items(),
         condition=IfCondition(LaunchConfiguration("memory")),
     )

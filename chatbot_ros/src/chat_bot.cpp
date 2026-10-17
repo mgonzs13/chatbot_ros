@@ -35,7 +35,7 @@
 
 namespace chatbot_ros {
 
-const char *const INTERRUPTED_OUTCOME = "INTERRUPTED";
+const char *const INTERRUPTED_OUTCOME = "interrupted";
 
 namespace {
 
