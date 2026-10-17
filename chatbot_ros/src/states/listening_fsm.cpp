@@ -24,19 +24,20 @@
 
 namespace chatbot_ros {
 
-ListenFSM::ListenFSM()
+ListenFSM::ListenFSM(const ChatbotConfig &config)
     : yasmin::StateMachine({yasmin_ros::basic_outcomes::SUCCEED,
                             yasmin_ros::basic_outcomes::CANCEL,
                             yasmin_ros::basic_outcomes::ABORT}) {
 
   this->add_state(
-      "LISTENING", std::make_shared<ListenState>(),
+      "LISTENING", std::make_shared<ListenState>(config),
       {{yasmin_ros::basic_outcomes::SUCCEED, "CHECKING_STT"},
        {yasmin_ros::basic_outcomes::ABORT, yasmin_ros::basic_outcomes::ABORT},
        {yasmin_ros::basic_outcomes::CANCEL,
         yasmin_ros::basic_outcomes::CANCEL}});
 
-  this->add_state("CHECKING_STT", std::make_shared<CheckSttState>(),
+  this->add_state("CHECKING_STT",
+                  std::make_shared<CheckSttState>(config.retry_messages),
                   {{yasmin_ros::basic_outcomes::SUCCEED,
                     yasmin_ros::basic_outcomes::SUCCEED},
                    {yasmin_ros::basic_outcomes::ABORT, "COMPLAINING"}});

@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![License: MIT](https://img.shields.io/badge/GitHub-GPL--3.0-informational)](https://opensource.org/license/gpl-3-0) [![GitHub release](https://img.shields.io/github/release/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/releases) [![Code Size](https://img.shields.io/github/languages/code-size/mgonzs13/chatbot_ros.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros?branch=main) [![Last Commit](https://img.shields.io/github/last-commit/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/commits/main) [![GitHub issues](https://img.shields.io/github/issues/mgonzs13/chatbot_ros)](https://github.com/mgonzs13/chatbot_ros/issues) [![GitHub pull requests](https://img.shields.io/github/issues-pr/mgonzs13/chatbot_ros)](https://github.com/mgonzs13/chatbot_ros/pulls) [![Contributors](https://img.shields.io/github/contributors/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/graphs/contributors) [![C++ Formatter Check](https://github.com/mgonzs13/chatbot_ros/actions/workflows/cpp-formatter.yml/badge.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros/actions/workflows/cpp-formatter.yml?branch=main) [![Python Formatter Check](https://github.com/mgonzs13/chatbot_ros/actions/workflows/python-formatter.yml/badge.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros/actions/workflows/python-formatter.yml?branch=main)
+[![License: MIT](https://img.shields.io/badge/GitHub-GPL--3.0-informational)](https://opensource.org/license/gpl-3-0) [![GitHub release](https://img.shields.io/github/release/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/releases) [![Code Size](https://img.shields.io/github/languages/code-size/mgonzs13/chatbot_ros.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros?branch=main) [![Last Commit](https://img.shields.io/github/last-commit/mgonzs13/chatbot_ros.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros/commits/main) [![GitHub issues](https://img.shields.io/github/issues/mgonzs13/chatbot_ros)](https://github.com/mgonzs13/chatbot_ros/issues) [![GitHub pull requests](https://img.shields.io/github/issues-pr/mgonzs13/chatbot_ros)](https://github.com/mgonzs13/chatbot_ros/pulls) [![Contributors](https://img.shields.io/github/contributors/mgonzs13/chatbot_ros.svg)](https://github.com/mgonzs13/chatbot_ros/graphs/contributors) [![C++ Formatter Check](https://github.com/mgonzs13/chatbot_ros/actions/workflows/cpp-formatter.yml/badge.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros/actions/workflows/cpp-formatter.yml?branch=main) [![Python Formatter Check](https://github.com/mgonzs13/chatbot_ros/actions/workflows/python-formatter.yml/badge.svg?branch=main)](https://github.com/mgonzs13/chatbot_ros/actions/workflows/python-formatter.yml?branch=main)
 
 | ROS 2 Distro |                           Branch                            |                                                                                                         Build status                                                                                                         | Docker Image | Documentation |
 | :----------: | :---------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :----------: | ------------- |
@@ -17,6 +17,8 @@
 1. [Dependencies](#dependencies)
 2. [Installation](#installation)
 3. [Usage](#usage)
+4. [Features](#features)
+5. [Configuration](#configuration)
 
 ## Dependencies
 
@@ -44,3 +46,83 @@ colcon build --cmake-args -DGGML_CUDA=ON
 ```shell
 ros2 launch chatbot_bringup chatbot.launch.py
 ```
+
+Launches Whisper (STT), llama_ros (LLM), Piper (TTS) and the chatbot
+
+## Features
+
+### Interruptions (barge-in)
+
+While the chatbot is generating and speaking a response it keeps listening.
+If the user starts talking, the ongoing response is stopped immediately and
+the new request is answered, so there is no need to wait for the robot to
+finish speaking.
+
+Since the microphone also picks up the robot's own voice, transcriptions are
+compared with the sentences being spoken. Transcriptions that look like an
+echo of the robot's own voice are ignored. If the robot interrupts itself
+anyway, raise `interrupt.similarity_threshold`; if real interruptions are
+ignored, lower it. Single words such as "stop" always count as an
+interruption.
+
+### Conversation memory
+
+- **Short-term memory:** the most recent turns (`history.max_turns`) are sent
+  back to the LLM with every request, so the chatbot remembers the ongoing
+  conversation.
+- **Long-term memory (optional):** past turns are embedded with a
+  `llama_ros` embedding model and stored in a small vector database on disk
+  (`$HOME/.cache/chatbot_ros/memory.json`). The most similar memories are
+  injected into the system prompt of new requests. Enable it with:
+
+```shell
+ros2 launch chatbot_bringup chatbot.launch.py memory:=true
+```
+
+This launches a second `llama_ros` node (`embedding.yaml`, bge-base-en-v1.5)
+in the `embedding` namespace. The model is downloaded on the first run. The
+memory is best-effort: if the embeddings service is not reachable the chatbot
+keeps working without long-term memory.
+
+### Voice-friendly answers
+
+- The system prompt is fully configurable and can be loaded from a file.
+- Responses are sanitized before being spoken: markdown (bold, lists,
+  headings, code blocks, tables), emoji, links and other non-natural text are
+  removed so the TTS only says natural language.
+- Whisper transcriptions are filtered: non-speech annotations such as
+  `[BLANK_AUDIO]`, `(music)`, `♪ ... ♪` and hallucinated phrases
+  ("Thank you for watching!") are discarded and the chatbot asks the user to
+  repeat instead.
+
+## Configuration
+
+All parameters live in
+[`chatbot_bringup/config/chatbot.yaml`](chatbot_bringup/config/chatbot.yaml)
+and can be overridden at launch or on the command line (e.g.
+`ros2 launch chatbot_bringup chatbot.launch.py` after editing the file, or
+`--ros-args -p interrupt.enabled:=false` on the node).
+
+| Parameter                        | Type     | Default                          | Description                                                         |
+| -------------------------------- | -------- | -------------------------------- | ------------------------------------------------------------------- |
+| `messages.greeting`              | string   | `"Hi, how can I help you?"`      | Message spoken at startup (empty disables the greeting)             |
+| `messages.system_prompt`         | string   | voice-oriented prompt            | System prompt sent with every request (empty disables it)           |
+| `messages.system_prompt_file`    | string   | `""`                             | Load the system prompt from this file when `system_prompt` is empty |
+| `messages.retry_messages`        | string[] | 3 messages                       | Spoken in round-robin when no speech was recognized                 |
+| `stt.prompt`                     | string   | `""`                             | Initial prompt passed to Whisper                                    |
+| `stt.ignored_phrases`            | string[] | hallucination phrases            | Transcriptions containing these are treated as noise                |
+| `llm.temperature`                | double   | `0.4`                            | Sampling temperature for the chat completions                       |
+| `history.max_turns`              | int      | `8`                              | User/assistant turn pairs kept in the short-term memory             |
+| `interrupt.enabled`              | bool     | `true`                           | Listen for user speech while speaking                               |
+| `interrupt.similarity_threshold` | double   | `0.8`                            | Echo similarity above which an interruption is ignored              |
+| `memory.enabled`                 | bool     | `false`                          | Enable the embeddings-based long-term memory                        |
+| `memory.service`                 | string   | `/embedding/generate_embeddings` | Embeddings service used by the long-term memory                     |
+| `memory.storage_file`            | string   | `$HOME/.cache/chatbot_ros/...`   | JSON file where memories are persisted                              |
+| `memory.retrieve_k`              | int      | `3`                              | Number of memories injected into the system prompt                  |
+| `memory.min_similarity`          | double   | `0.55`                           | Minimum cosine similarity for a memory to be retrieved              |
+| `memory.max_entries`             | int      | `512`                            | Maximum number of memories kept on disk                             |
+
+The language model and its context length are configured in
+[`chatbot_bringup/config/llama.yaml`](chatbot_bringup/config/llama.yaml).
+The embedding model used by the long-term memory is configured in
+[`chatbot_bringup/config/embedding.yaml`](chatbot_bringup/config/embedding.yaml).

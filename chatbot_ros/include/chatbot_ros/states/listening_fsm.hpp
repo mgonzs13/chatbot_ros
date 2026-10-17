@@ -16,13 +16,14 @@
 #ifndef CHATBOT_ROS__STATES__LISTENING_FSM_HPP_
 #define CHATBOT_ROS__STATES__LISTENING_FSM_HPP_
 
+#include "chatbot_ros/chatbot_config.hpp"
 #include "yasmin/state_machine.hpp"
 
 namespace chatbot_ros {
 
 class ListenFSM : public yasmin::StateMachine {
 public:
-  ListenFSM();
+  explicit ListenFSM(const ChatbotConfig &config = ChatbotConfig());
 };
 
 } // namespace chatbot_ros

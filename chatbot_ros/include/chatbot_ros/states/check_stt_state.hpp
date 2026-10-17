@@ -16,7 +16,9 @@
 #ifndef CHATBOT_ROS__STATES__CHECK_STT_STATE_HPP_
 #define CHATBOT_ROS__STATES__CHECK_STT_STATE_HPP_
 
+#include <cstddef>
 #include <string>
+#include <vector>
 
 #include "yasmin/blackboard.hpp"
 #include "yasmin/state.hpp"
@@ -25,9 +27,15 @@ namespace chatbot_ros {
 
 class CheckSttState : public yasmin::State {
 public:
-  CheckSttState();
+  /// `retry_messages` are spoken in round-robin order whenever the
+  /// transcription is empty; an empty list uses the defaults.
+  explicit CheckSttState(std::vector<std::string> retry_messages = {});
 
   std::string execute(yasmin::Blackboard::SharedPtr blackboard) override;
+
+private:
+  std::vector<std::string> retry_messages_;
+  std::size_t retry_index_{0};
 };
 
 } // namespace chatbot_ros

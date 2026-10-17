@@ -50,4 +50,6 @@ std::optional<std::string> SentenceAccumulator::flush() {
   return leftover;
 }
 
+void SentenceAccumulator::clear() { this->buffer_.clear(); }
+
 } // namespace chatbot_ros

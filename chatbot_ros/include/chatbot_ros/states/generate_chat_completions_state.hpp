@@ -20,6 +20,9 @@
 #include <mutex>
 #include <string>
 
+#include "chatbot_ros/chatbot_config.hpp"
+#include "chatbot_ros/conversation_history.hpp"
+#include "chatbot_ros/embedding_memory.hpp"
 #include "chatbot_ros/states/sentence_accumulator.hpp"
 #include "chatbot_ros/states/speech_pipeline.hpp"
 #include "llama_msgs/action/generate_chat_completions.hpp"
@@ -32,9 +35,16 @@ class GenerateChatCompletionsState
     : public yasmin_ros::ActionState<
           llama_msgs::action::GenerateChatCompletions> {
 public:
-  explicit GenerateChatCompletionsState(SpeechPipeline::SharedPtr pipeline);
+  explicit GenerateChatCompletionsState(
+      SpeechPipeline::SharedPtr pipeline,
+      const ChatbotConfig &config = ChatbotConfig(),
+      ConversationHistory::SharedPtr history = nullptr,
+      EmbeddingMemory::SharedPtr memory = nullptr);
 
   std::string execute(yasmin::Blackboard::SharedPtr blackboard) override;
+
+  /// Cancels the in-flight generation, used when the user interrupts.
+  void request_cancel();
 
 private:
   llama_msgs::action::GenerateChatCompletions::Goal
@@ -50,9 +60,16 @@ private:
           const llama_msgs::action::GenerateChatCompletions::Feedback>
           feedback);
 
+  /// System prompt plus any retrieved long-term memories.
+  std::string build_system_prompt(const std::string &user_text);
+
   SpeechPipeline::SharedPtr pipeline_;
+  ChatbotConfig config_;
+  ConversationHistory::SharedPtr history_;
+  EmbeddingMemory::SharedPtr memory_;
   std::mutex buffer_mutex_;
   SentenceAccumulator accumulator_;
+  std::string current_user_text_;
 };
 
 } // namespace chatbot_ros

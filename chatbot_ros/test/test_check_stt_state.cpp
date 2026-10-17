@@ -17,33 +17,58 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "chatbot_ros/states/check_stt_state.hpp"
 #include "yasmin/blackboard.hpp"
 #include "yasmin_ros/basic_outcomes.hpp"
 
+using chatbot_ros::CheckSttState;
+
 TEST(CheckSttState, SucceedsWithNonEmptyTranscript) {
-  chatbot_ros::CheckSttState state;
+  CheckSttState state;
   auto blackboard = yasmin::Blackboard::make_shared();
   blackboard->set<std::string>("stt", "hello");
   EXPECT_EQ(state(blackboard), yasmin_ros::basic_outcomes::SUCCEED);
 }
 
 TEST(CheckSttState, AbortsAndSetsComplaintWithEmptyTranscript) {
-  chatbot_ros::CheckSttState state;
+  CheckSttState state({"first complaint", "second complaint"});
   auto blackboard = yasmin::Blackboard::make_shared();
   blackboard->set<std::string>("stt", "");
   EXPECT_EQ(state(blackboard), yasmin_ros::basic_outcomes::ABORT);
   ASSERT_TRUE(blackboard->contains("tts"));
-  EXPECT_EQ(blackboard->get<std::string>("tts"),
-            "I didn't understand youd. Can you repeat?");
+  EXPECT_EQ(blackboard->get<std::string>("tts"), "first complaint");
+}
+
+TEST(CheckSttState, RotatesComplaintMessages) {
+  CheckSttState state({"first complaint", "second complaint"});
+  auto blackboard = yasmin::Blackboard::make_shared();
+
+  EXPECT_EQ(state(blackboard), yasmin_ros::basic_outcomes::ABORT);
+  EXPECT_EQ(blackboard->get<std::string>("tts"), "first complaint");
+  EXPECT_EQ(state(blackboard), yasmin_ros::basic_outcomes::ABORT);
+  EXPECT_EQ(blackboard->get<std::string>("tts"), "second complaint");
+  EXPECT_EQ(state(blackboard), yasmin_ros::basic_outcomes::ABORT);
+  EXPECT_EQ(blackboard->get<std::string>("tts"), "first complaint");
 }
 
 TEST(CheckSttState, AbortsAndSetsComplaintWhenTranscriptMissing) {
-  chatbot_ros::CheckSttState state;
+  CheckSttState state({"please repeat"});
   auto blackboard = yasmin::Blackboard::make_shared();
   EXPECT_EQ(state(blackboard), yasmin_ros::basic_outcomes::ABORT);
   ASSERT_TRUE(blackboard->contains("tts"));
-  EXPECT_EQ(blackboard->get<std::string>("tts"),
-            "I didn't understand youd. Can you repeat?");
+  EXPECT_EQ(blackboard->get<std::string>("tts"), "please repeat");
+}
+
+TEST(CheckSttState, UsesDefaultMessagesWhenNoneGiven) {
+  CheckSttState state;
+  auto blackboard = yasmin::Blackboard::make_shared();
+  EXPECT_EQ(state(blackboard), yasmin_ros::basic_outcomes::ABORT);
+  EXPECT_FALSE(blackboard->get<std::string>("tts").empty());
+}
+
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

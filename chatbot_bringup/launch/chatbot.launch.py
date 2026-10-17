@@ -18,7 +18,12 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable
+from launch.actions import (
+    DeclareLaunchArgument,
+    IncludeLaunchDescription,
+    SetEnvironmentVariable,
+)
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -28,6 +33,30 @@ def generate_launch_description():
 
     stdout_linebuf_envvar = SetEnvironmentVariable(
         "RCUTILS_CONSOLE_STDOUT_LINE_BUFFERED", "1"
+    )
+
+    chatbot_params_file = LaunchConfiguration(
+        "chatbot_params_file",
+        default=os.path.join(
+            get_package_share_directory("chatbot_bringup"),
+            "config",
+            "chatbot.yaml",
+        ),
+    )
+
+    memory_cmd = DeclareLaunchArgument(
+        "memory",
+        default_value="false",
+        description="Launch an embedding model for the long-term memory",
+    )
+
+    memory_params_file = LaunchConfiguration(
+        "memory_params_file",
+        default=os.path.join(
+            get_package_share_directory("chatbot_bringup"),
+            "config",
+            "embedding.yaml",
+        ),
     )
 
     whisper_cmd = IncludeLaunchDescription(
@@ -62,6 +91,22 @@ def generate_launch_description():
         }.items(),
     )
 
+    embedding_cmd = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory("llama_bringup"),
+                "launch",
+                "base.launch.py",
+            )
+        ),
+        launch_arguments={
+            "params_file": memory_params_file,
+            "node_name": "llama_node",
+            "namespace": "embedding",
+        }.items(),
+        condition=IfCondition(LaunchConfiguration("memory")),
+    )
+
     piper_node_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
@@ -81,6 +126,7 @@ def generate_launch_description():
         package="chatbot_ros",
         executable="chat_bot_node",
         output="both",
+        parameters=[chatbot_params_file],
     )
 
     yasmin_viewer_cmd = Node(
@@ -93,10 +139,12 @@ def generate_launch_description():
     ld = LaunchDescription()
 
     ld.add_action(stdout_linebuf_envvar)
+    ld.add_action(memory_cmd)
 
     ld.add_action(whisper_cmd)
     ld.add_action(piper_node_cmd)
     ld.add_action(llama_cmd)
+    ld.add_action(embedding_cmd)
     ld.add_action(chatbot_node_cmd)
     ld.add_action(yasmin_viewer_cmd)
 

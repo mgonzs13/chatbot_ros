@@ -19,26 +19,45 @@
 #include <memory>
 #include <string>
 
+#include "chatbot_ros/chatbot_config.hpp"
+#include "chatbot_ros/conversation_history.hpp"
+#include "chatbot_ros/embedding_memory.hpp"
 #include "chatbot_ros/states/speech_pipeline.hpp"
 #include "yasmin/concurrence.hpp"
 #include "yasmin/state_machine.hpp"
 
 namespace chatbot_ros {
 
-yasmin::Concurrence::SharedPtr
-create_responding_concurrence(const SpeechPipeline::SharedPtr &pipeline);
+/// Outcome of the responding concurrence when the user interrupted the
+/// robot while it was speaking.
+extern const char *const INTERRUPTED_OUTCOME;
+
+yasmin::Concurrence::SharedPtr create_responding_concurrence(
+    const SpeechPipeline::SharedPtr &pipeline,
+    const ChatbotConfig &config = ChatbotConfig(),
+    const ConversationHistory::SharedPtr &history = nullptr,
+    const EmbeddingMemory::SharedPtr &memory = nullptr);
 
 class ChatBot {
 public:
   ChatBot();
 
+  explicit ChatBot(const ChatbotConfig &config);
+
   std::string execute();
 
   yasmin::StateMachine::SharedPtr get_state_machine() const;
 
+  const ChatbotConfig &get_config() const;
+
 private:
+  void build_state_machine();
+
   yasmin::StateMachine::SharedPtr state_machine_;
   SpeechPipeline::SharedPtr pipeline_;
+  ChatbotConfig config_;
+  ConversationHistory::SharedPtr history_;
+  EmbeddingMemory::SharedPtr memory_;
 };
 
 } // namespace chatbot_ros

@@ -1,0 +1,24 @@
+/**:
+  ros__parameters:
+    # Small embedding model used by the long-term memory. It is launched
+    # with `ros2 launch chatbot_bringup chatbot.launch.py memory:=true`
+    # under the "embedding" namespace, exposing its service at
+    # /embedding/generate_embeddings (see chatbot.yaml, memory.service).
+    model:
+      repo: CompendiumLabs/bge-base-en-v1.5-gguf
+      filename: bge-base-en-v1.5-f16.gguf
+
+    # Context / inference parameters
+    context:
+      n_ctx: 2048
+      n_batch: 1024
+      n_predict: 2048
+      embedding: true
+
+    # GPU / backend parameters
+    gpu:
+      n_gpu_layers: 0
+
+    # CPU parameters
+    cpu:
+      n_threads: 1

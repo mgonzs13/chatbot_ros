@@ -18,6 +18,8 @@
 
 #include <string>
 
+#include "chatbot_ros/chatbot_config.hpp"
+#include "chatbot_ros/text/transcript_filter.hpp"
 #include "whisper_msgs/action/stt.hpp"
 #include "yasmin/blackboard.hpp"
 #include "yasmin_ros/action_state.hpp"
@@ -26,7 +28,9 @@ namespace chatbot_ros {
 
 class ListenState : public yasmin_ros::ActionState<whisper_msgs::action::STT> {
 public:
-  ListenState();
+  explicit ListenState(const ChatbotConfig &config = ChatbotConfig());
+
+  std::string execute(yasmin::Blackboard::SharedPtr blackboard) override;
 
 private:
   whisper_msgs::action::STT::Goal
@@ -35,6 +39,9 @@ private:
   std::string
   result_handler(yasmin::Blackboard::SharedPtr blackboard,
                  whisper_msgs::action::STT::Result::SharedPtr result);
+
+  ChatbotConfig config_;
+  text::TranscriptFilter filter_;
 };
 
 } // namespace chatbot_ros

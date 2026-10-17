@@ -1,0 +1,62 @@
+/**:
+  ros__parameters:
+    # Spoken messages. The system prompt is sent with every chat completion
+    # request; set it to "" if the model does not support system messages.
+    messages:
+      greeting: "Hi, how can I help you?"
+      system_prompt: |-
+        You are a friendly robot assistant that talks with people out loud. Follow these rules at all times:
+        - Keep every answer short and natural, one or two sentences.
+        - Use plain spoken language. Never use markdown, bullet points, emojis, code blocks, tables or any other formatting.
+        - If you do not know something, say it briefly instead of making things up.
+        - Reply in the same language the user is speaking.
+      # Uncomment to load a longer system prompt from a file instead:
+      # system_prompt_file: "/path/to/system_prompt.txt"
+      retry_messages:
+        - "Sorry, I didn't hear anything. Could you repeat that?"
+        - "I'm not sure I understood. Could you say it again?"
+        - "My ears must have missed that. Could you rephrase it?"
+
+    # Speech recognition.
+    stt:
+      # Initial prompt passed to Whisper for every request.
+      prompt: ""
+      # Transcriptions that are discarded because they are just noise or
+      # Whisper hallucinations rather than real speech.
+      ignored_phrases:
+        - "thank you for watching"
+        - "thanks for watching"
+        - "thank you for listening"
+        - "subtitles by"
+        - "subtitles are provided by"
+        - "amara.org"
+        - "please subscribe"
+        - "subscribe to my channel"
+
+    # Language model.
+    llm:
+      temperature: 0.4
+
+    # Short-term memory: recent turns sent back to the LLM.
+    history:
+      max_turns: 8
+
+    # Listening while speaking (barge-in). The user can interrupt the robot
+    # by simply talking; the response is stopped and the new request is
+    # answered. Raise similarity_threshold if the robot interrupts itself
+    # with its own voice, lower it if real interruptions are ignored.
+    interrupt:
+      enabled: true
+      similarity_threshold: 0.8
+
+    # Long-term memory (retrieval augmented generation). Requires a second
+    # llama_ros node running an embedding model; launch it with
+    # `ros2 launch chatbot_bringup chatbot.launch.py memory:=true`.
+    memory:
+      enabled: false
+      service: "/embedding/generate_embeddings"
+      # Empty path uses $HOME/.cache/chatbot_ros/memory.json
+      storage_file: ""
+      retrieve_k: 3
+      min_similarity: 0.55
+      max_entries: 512

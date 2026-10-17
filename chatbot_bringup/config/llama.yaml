@@ -9,7 +9,9 @@
     context:
       n_ctx: 4096
       n_batch: 256
-      n_predict: -1
+      # Cap the answer length: the chatbot is voice oriented and long
+      # monologues are hard to interrupt and tedious to listen to.
+      n_predict: 256
 
     # GPU / backend parameters
     gpu:

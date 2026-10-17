@@ -15,13 +15,21 @@
 
 #include "chatbot_ros/states/check_stt_state.hpp"
 
+#include <utility>
+
+#include "chatbot_ros/chatbot_config.hpp"
 #include "yasmin_ros/basic_outcomes.hpp"
 
 namespace chatbot_ros {
 
-CheckSttState::CheckSttState()
+CheckSttState::CheckSttState(std::vector<std::string> retry_messages)
     : yasmin::State({yasmin_ros::basic_outcomes::SUCCEED,
-                     yasmin_ros::basic_outcomes::ABORT}) {}
+                     yasmin_ros::basic_outcomes::ABORT}) {
+  if (retry_messages.empty()) {
+    retry_messages = default_retry_messages();
+  }
+  this->retry_messages_ = std::move(retry_messages);
+}
 
 std::string CheckSttState::execute(yasmin::Blackboard::SharedPtr blackboard) {
   std::string transcript = "";
@@ -31,8 +39,11 @@ std::string CheckSttState::execute(yasmin::Blackboard::SharedPtr blackboard) {
   if (!transcript.empty()) {
     return yasmin_ros::basic_outcomes::SUCCEED;
   }
-  blackboard->set<std::string>("tts",
-                               "I didn't understand youd. Can you repeat?");
+
+  const std::string &message =
+      this->retry_messages_[this->retry_index_ % this->retry_messages_.size()];
+  this->retry_index_++;
+  blackboard->set<std::string>("tts", message);
   return yasmin_ros::basic_outcomes::ABORT;
 }
 

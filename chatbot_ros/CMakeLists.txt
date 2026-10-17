@@ -13,11 +13,20 @@ find_package(yasmin_viewer REQUIRED)
 find_package(audio_common_msgs REQUIRED)
 find_package(llama_msgs REQUIRED)
 find_package(whisper_msgs REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 add_library(chatbot_ros_lib
   src/chat_bot.cpp
+  src/chatbot_config.cpp
+  src/conversation_history.cpp
+  src/echo_guard.cpp
+  src/embedding_memory.cpp
+  src/text/speech_sanitizer.cpp
+  src/text/text_similarity.cpp
+  src/text/transcript_filter.cpp
   src/states/check_stt_state.cpp
   src/states/generate_chat_completions_state.cpp
+  src/states/interrupt_listening_state.cpp
   src/states/listen_state.cpp
   src/states/listening_fsm.cpp
   src/states/sentence_accumulator.cpp
@@ -33,6 +42,7 @@ target_link_libraries(chatbot_ros_lib PUBLIC
   yasmin::yasmin
   yasmin_ros::yasmin_ros
   yasmin_viewer::yasmin_viewer
+  nlohmann_json::nlohmann_json
   ${audio_common_msgs_TARGETS}
   ${llama_msgs_TARGETS}
   ${whisper_msgs_TARGETS})
@@ -60,6 +70,15 @@ if(BUILD_TESTING)
   ament_add_gtest(test_check_stt_state test/test_check_stt_state.cpp)
   target_link_libraries(test_check_stt_state chatbot_ros_lib)
 
+  ament_add_gtest(test_text_utils test/test_text_utils.cpp)
+  target_link_libraries(test_text_utils chatbot_ros_lib)
+
+  ament_add_gtest(test_chatbot_config test/test_chatbot_config.cpp)
+  target_link_libraries(test_chatbot_config chatbot_ros_lib)
+
+  ament_add_gtest(test_embedding_memory test/test_embedding_memory.cpp)
+  target_link_libraries(test_embedding_memory chatbot_ros_lib)
+
   ament_add_gtest(test_chatbot_fsm test/test_chatbot_fsm.cpp
     SKIP_LINKING_MAIN_LIBRARIES)
   target_link_libraries(test_chatbot_fsm chatbot_ros_lib)
@@ -68,6 +87,6 @@ endif()
 
 ament_export_targets(export_chatbot_ros_lib HAS_LIBRARY_TARGET)
 ament_export_dependencies(rclcpp rclcpp_action yasmin yasmin_ros yasmin_viewer
-  audio_common_msgs llama_msgs whisper_msgs)
+  audio_common_msgs llama_msgs whisper_msgs nlohmann_json)
 
 ament_package()

@@ -27,6 +27,9 @@ public:
   std::vector<std::string> add(const std::string &text);
   std::optional<std::string> flush();
 
+  /// Drops any buffered text, e.g. when a generation is interrupted.
+  void clear();
+
 private:
   static bool ends_with_punctuation(const std::string &text);
 
