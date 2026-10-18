@@ -5,8 +5,8 @@
     # under the "embedding" namespace, exposing its service at
     # /embedding/generate_embeddings (see chatbot.yaml, memory.service).
     model:
-      repo: CompendiumLabs/bge-base-en-v1.5-gguf
-      filename: bge-base-en-v1.5-f16.gguf
+      repo: mradermacher/GIST-small-Embedding-v0-GGUF
+      filename: GIST-small-Embedding-v0.Q8_0.gguf
 
     # Context / inference parameters
     context:

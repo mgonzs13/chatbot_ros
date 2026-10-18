@@ -48,7 +48,7 @@
     # still interrupts itself, lower it if real interruptions are ignored.
     interrupt:
       enabled: true
-      similarity_threshold: 0.65
+      similarity_threshold: 0.8
       # Command words that always count as an interruption when they appear
       # in a short transcription, even if the robot said them recently.
       always_words:
