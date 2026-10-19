@@ -41,25 +41,6 @@
     history:
       max_turns: 8
 
-    # Listening while speaking (barge-in). The user can interrupt the robot
-    # by simply talking; the response is stopped and the new request is
-    # answered. Transcriptions that mostly repeat the robot's own recent
-    # speech are ignored as echo. Raise similarity_threshold if the robot
-    # still interrupts itself, lower it if real interruptions are ignored.
-    interrupt:
-      enabled: true
-      similarity_threshold: 0.8
-      # Command words that always count as an interruption when they appear
-      # in a short transcription, even if the robot said them recently.
-      always_words:
-        - "stop"
-        - "wait"
-        - "quiet"
-        - "cancel"
-        - "pause"
-        - "enough"
-        - "no"
-
     # Long-term memory (retrieval augmented generation). Requires a second
     # llama_ros node running an embedding model; launch it with
     # `ros2 launch chatbot_bringup chatbot.launch.py memory:=true`.

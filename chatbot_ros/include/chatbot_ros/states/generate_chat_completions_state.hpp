@@ -43,9 +43,6 @@ public:
 
   std::string execute(yasmin::Blackboard::SharedPtr blackboard) override;
 
-  /// Cancels the in-flight generation, used when the user interrupts.
-  void request_cancel();
-
 private:
   llama_msgs::action::GenerateChatCompletions::Goal
   create_goal_handler(yasmin::Blackboard::SharedPtr blackboard);

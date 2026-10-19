@@ -51,26 +51,6 @@ Launches Whisper (STT), llama_ros (LLM), Piper (TTS) and the chatbot
 
 ## Features
 
-### Interruptions (barge-in)
-
-While the chatbot is generating and speaking a response it keeps listening.
-If the user starts talking, the ongoing response is stopped immediately and
-the new request is answered, so there is no need to wait for the robot to
-finish speaking.
-
-Since the microphone also picks up the robot's own voice, every
-transcription is compared with the sentences the robot recently spoke:
-fragments, missing words and Whisper hallucinations at the end of a
-transcript are tolerated and still recognized as the robot's own voice.
-Transcriptions that match a recently spoken sentence are ignored, so the
-robot does not interrupt itself.
-
-- `interrupt.similarity_threshold` (default `0.65`): raise it if the robot
-  still reacts to its own voice, lower it if real interruptions are ignored.
-- `interrupt.always_words`: short commands such as "stop", "wait" or "no"
-  always count as a real interruption, even if the robot used those words
-  recently.
-
 ### Conversation memory
 
 - **Short-term memory:** the most recent turns (`history.max_turns`) are sent
@@ -105,29 +85,25 @@ keeps working without long-term memory.
 
 All parameters live in
 [`chatbot_bringup/config/chatbot.yaml`](chatbot_bringup/config/chatbot.yaml)
-and can be overridden at launch or on the command line (e.g.
-`ros2 launch chatbot_bringup chatbot.launch.py` after editing the file, or
-`--ros-args -p interrupt.enabled:=false` on the node).
+and can be overridden at launch (e.g.
+`ros2 launch chatbot_bringup chatbot.launch.py` after editing the file).
 
-| Parameter                        | Type     | Default                          | Description                                                         |
-| -------------------------------- | -------- | -------------------------------- | ------------------------------------------------------------------- |
-| `messages.greeting`              | string   | `"Hi, how can I help you?"`      | Message spoken at startup (empty disables the greeting)             |
-| `messages.system_prompt`         | string   | voice-oriented prompt            | System prompt sent with every request (empty disables it)           |
-| `messages.system_prompt_file`    | string   | `""`                             | Load the system prompt from this file when `system_prompt` is empty |
-| `messages.retry_messages`        | string[] | 3 messages                       | Spoken in round-robin when no speech was recognized                 |
-| `stt.prompt`                     | string   | `""`                             | Initial prompt passed to Whisper                                    |
-| `stt.ignored_phrases`            | string[] | hallucination phrases            | Transcriptions containing these are treated as noise                |
-| `llm.temperature`                | double   | `0.4`                            | Sampling temperature for the chat completions                       |
-| `history.max_turns`              | int      | `8`                              | User/assistant turn pairs kept in the short-term memory             |
-| `interrupt.enabled`              | bool     | `true`                           | Listen for user speech while speaking                               |
-| `interrupt.similarity_threshold` | double   | `0.65`                           | Echo similarity above which an interruption is ignored              |
-| `interrupt.always_words`         | string[] | stop, wait, quiet, cancel, ...   | Short commands that always interrupt, even if recently spoken       |
-| `memory.enabled`                 | bool     | `false`                          | Enable the embeddings-based long-term memory                        |
-| `memory.service`                 | string   | `/embedding/generate_embeddings` | Embeddings service used by the long-term memory                     |
-| `memory.storage_file`            | string   | `$HOME/.cache/chatbot_ros/...`   | JSON file where memories are persisted                              |
-| `memory.retrieve_k`              | int      | `3`                              | Number of memories injected into the system prompt                  |
-| `memory.min_similarity`          | double   | `0.55`                           | Minimum cosine similarity for a memory to be retrieved              |
-| `memory.max_entries`             | int      | `512`                            | Maximum number of memories kept on disk                             |
+| Parameter                     | Type     | Default                          | Description                                                         |
+| ----------------------------- | -------- | -------------------------------- | ------------------------------------------------------------------- |
+| `messages.greeting`           | string   | `"Hi, how can I help you?"`      | Message spoken at startup (empty disables the greeting)             |
+| `messages.system_prompt`      | string   | voice-oriented prompt            | System prompt sent with every request (empty disables it)           |
+| `messages.system_prompt_file` | string   | `""`                             | Load the system prompt from this file when `system_prompt` is empty |
+| `messages.retry_messages`     | string[] | 3 messages                       | Spoken in round-robin when no speech was recognized                 |
+| `stt.prompt`                  | string   | `""`                             | Initial prompt passed to Whisper                                    |
+| `stt.ignored_phrases`         | string[] | hallucination phrases            | Transcriptions containing these are treated as noise                |
+| `llm.temperature`             | double   | `0.4`                            | Sampling temperature for the chat completions                       |
+| `history.max_turns`           | int      | `8`                              | User/assistant turn pairs kept in the short-term memory             |
+| `memory.enabled`              | bool     | `false`                          | Enable the embeddings-based long-term memory                        |
+| `memory.service`              | string   | `/embedding/generate_embeddings` | Embeddings service used by the long-term memory                     |
+| `memory.storage_file`         | string   | `$HOME/.cache/chatbot_ros/...`   | JSON file where memories are persisted                              |
+| `memory.retrieve_k`           | int      | `3`                              | Number of memories injected into the system prompt                  |
+| `memory.min_similarity`       | double   | `0.55`                           | Minimum cosine similarity for a memory to be retrieved              |
+| `memory.max_entries`          | int      | `512`                            | Maximum number of memories kept on disk                             |
 
 The language model and its context length are configured in
 [`chatbot_bringup/config/llama.yaml`](chatbot_bringup/config/llama.yaml).

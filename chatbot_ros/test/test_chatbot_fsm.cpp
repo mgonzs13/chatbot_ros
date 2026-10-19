@@ -19,7 +19,6 @@
 #include <chrono>
 #include <cstdlib>
 #include <deque>
-#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -115,9 +114,8 @@ class StubSttServer {
 public:
   StubSttServer(const rclcpp::Node::SharedPtr &node,
                 std::vector<std::string> transcriptions,
-                std::chrono::milliseconds delay = 0ms,
-                std::function<bool()> gate = nullptr, int reject_goals = 0)
-      : delay_(delay), gate_(std::move(gate)), rejections_left_(reject_goals),
+                std::chrono::milliseconds delay = 0ms, int reject_goals = 0)
+      : delay_(delay), rejections_left_(reject_goals),
         transcriptions_(transcriptions.begin(), transcriptions.end()) {
     this->group_ =
         node->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
@@ -136,22 +134,6 @@ public:
         },
         [this](
             std::shared_ptr<rclcpp_action::ServerGoalHandle<STT>> goal_handle) {
-          // Optional gate: hold the transcription until another stub is
-          // ready (e.g. the robot started speaking).
-          const auto gate_deadline = std::chrono::steady_clock::now() + 30s;
-          while (this->gate_ && !this->gate_()) {
-            if (goal_handle->is_canceling()) {
-              this->cancel_goal(goal_handle);
-              return;
-            }
-            if (std::chrono::steady_clock::now() > gate_deadline) {
-              auto result = std::make_shared<STT::Result>();
-              goal_handle->abort(result);
-              return;
-            }
-            std::this_thread::sleep_for(20ms);
-          }
-
           std::string transcription = "";
           {
             std::lock_guard<std::mutex> lock(this->mutex_);
@@ -196,7 +178,6 @@ private:
   rclcpp_action::Server<STT>::SharedPtr server_;
   rclcpp::CallbackGroup::SharedPtr group_;
   std::chrono::milliseconds delay_;
-  std::function<bool()> gate_;
   int rejections_left_{0};
   std::mutex mutex_;
   std::deque<std::string> transcriptions_;
@@ -323,11 +304,9 @@ protected:
 
   std::shared_ptr<StubSttServer>
   make_stt_server(std::vector<std::string> transcriptions,
-                  std::chrono::milliseconds delay = 0ms,
-                  std::function<bool()> gate = nullptr, int reject_goals = 0) {
+                  std::chrono::milliseconds delay = 0ms, int reject_goals = 0) {
     this->stt_server_ = std::make_shared<StubSttServer>(
-        this->server_node_, std::move(transcriptions), delay, std::move(gate),
-        reject_goals);
+        this->server_node_, std::move(transcriptions), delay, reject_goals);
     return this->stt_server_;
   }
 
@@ -381,10 +360,10 @@ TEST_F(ChatbotFsmTest, ListenFsmFiltersNoiseTranscriptions) {
 
 TEST_F(ChatbotFsmTest, ListenFsmRecoversFromRejectedGoals) {
   // The whisper server rejects a goal while it finishes canceling the
-  // previous one (which happens right after an interruption).
+  // previous one.
   auto tts_server = this->make_tts_server();
   auto stt_server =
-      this->make_stt_server(std::vector<std::string>{"hello"}, 0ms, nullptr, 2);
+      this->make_stt_server(std::vector<std::string>{"hello"}, 0ms, 2);
 
   chatbot_ros::ListenFSM fsm;
   auto blackboard = yasmin::Blackboard::make_shared();
@@ -503,103 +482,6 @@ TEST_F(ChatbotFsmTest, RespondingConcurrenceAbortsWhenGenerationAborts) {
 
   EXPECT_EQ(outcome, yasmin_ros::basic_outcomes::ABORT);
   EXPECT_EQ(generate_server->get_last_goal().messages.size(), 2u);
-}
-
-TEST_F(ChatbotFsmTest, RespondingConcurrenceReportsInterruption) {
-  // The TTS server keeps "speaking" until the interaction is canceled.
-  auto tts_server = this->make_tts_server(10s);
-  // The transcription is only released once the robot started speaking, so
-  // the test does not depend on action server discovery timing.
-  auto stt_server = this->make_stt_server(
-      std::vector<std::string>{"actually stop"}, 0ms,
-      [tts_server]() { return !tts_server->get_spoken_texts().empty(); });
-  auto generate_server = this->make_generate_server(
-      std::vector<std::string>{
-          "Once upon a time there was a little robot in a factory."},
-      "Once upon a time there was a little robot in a factory.", false);
-
-  auto pipeline = std::make_shared<chatbot_ros::SpeechPipeline>();
-  auto concurrence = chatbot_ros::create_responding_concurrence(pipeline);
-
-  auto blackboard = yasmin::Blackboard::make_shared();
-  blackboard->set<std::string>("stt", "tell me a long story");
-  const std::string outcome = (*concurrence)(blackboard);
-
-  EXPECT_EQ(outcome, chatbot_ros::INTERRUPTED_OUTCOME);
-  ASSERT_TRUE(blackboard->contains("stt"));
-  EXPECT_EQ(blackboard->get<std::string>("stt"), "actually stop");
-  EXPECT_GE(tts_server->get_canceled_count(), 1);
-}
-
-TEST_F(ChatbotFsmTest, RespondingConcurrenceIgnoresOwnVoiceEcho) {
-  // The robot speaks and the microphone picks it up: Whisper transcribes
-  // the robot's own sentence. That must not interrupt the response.
-  const std::string sentence =
-      "Once upon a time there was a little robot in a factory.";
-  auto tts_server = this->make_tts_server(1500ms);
-  auto stt_server = this->make_stt_server(
-      std::vector<std::string>{sentence}, 0ms,
-      [tts_server]() { return !tts_server->get_spoken_texts().empty(); });
-  auto generate_server = this->make_generate_server(
-      std::vector<std::string>{sentence}, sentence, false);
-
-  auto pipeline = std::make_shared<chatbot_ros::SpeechPipeline>();
-  auto concurrence = chatbot_ros::create_responding_concurrence(pipeline);
-
-  auto blackboard = yasmin::Blackboard::make_shared();
-  blackboard->set<std::string>("stt", "tell me a story");
-  const std::string outcome = (*concurrence)(blackboard);
-
-  EXPECT_EQ(outcome, yasmin_ros::basic_outcomes::SUCCEED);
-  EXPECT_EQ(blackboard->get<std::string>("stt"), "tell me a story");
-  EXPECT_EQ(tts_server->get_canceled_count(), 0);
-}
-
-TEST_F(ChatbotFsmTest, RespondingConcurrenceStopsListenerWhenSpeakingEnds) {
-  auto tts_server = this->make_tts_server(700ms);
-  auto stt_server =
-      this->make_stt_server(std::vector<std::string>{"hello there"}, 10s);
-  auto generate_server =
-      this->make_generate_server(std::vector<std::string>{"Hi."}, "Hi.", false);
-
-  auto pipeline = std::make_shared<chatbot_ros::SpeechPipeline>();
-  auto concurrence = chatbot_ros::create_responding_concurrence(pipeline);
-
-  auto blackboard = yasmin::Blackboard::make_shared();
-  blackboard->set<std::string>("stt", "What's up?");
-  const std::string outcome = (*concurrence)(blackboard);
-
-  EXPECT_EQ(outcome, yasmin_ros::basic_outcomes::SUCCEED);
-  // The listener never interrupted, so the original transcript is kept.
-  EXPECT_EQ(blackboard->get<std::string>("stt"), "What's up?");
-  const auto spoken = tts_server->get_spoken_texts();
-  ASSERT_EQ(spoken.size(), 1u);
-  EXPECT_EQ(spoken[0], "Hi.");
-}
-
-TEST_F(ChatbotFsmTest, RespondingConcurrenceInterruptDisabled) {
-  auto tts_server = this->make_tts_server();
-  auto generate_server =
-      this->make_generate_server(std::vector<std::string>{"Hi."}, "Hi.", false);
-
-  chatbot_ros::ChatbotConfig config;
-  config.interrupt_enabled = false;
-  config.system_prompt = "";
-  config.temperature = 0.0;
-
-  auto pipeline = std::make_shared<chatbot_ros::SpeechPipeline>();
-  auto concurrence =
-      chatbot_ros::create_responding_concurrence(pipeline, config);
-
-  auto blackboard = yasmin::Blackboard::make_shared();
-  blackboard->set<std::string>("stt", "hello");
-  const std::string outcome = (*concurrence)(blackboard);
-
-  EXPECT_EQ(outcome, yasmin_ros::basic_outcomes::SUCCEED);
-  const GenerateChatCompletions::Goal goal = generate_server->get_last_goal();
-  ASSERT_EQ(goal.messages.size(), 1u);
-  EXPECT_EQ(goal.messages[0].role, "user");
-  EXPECT_FLOAT_EQ(goal.sampling_config.temp, 0.0F);
 }
 
 int main(int argc, char **argv) {

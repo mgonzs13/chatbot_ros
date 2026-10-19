@@ -15,16 +15,11 @@
 
 #include "chatbot_ros/chat_bot.hpp"
 
-#include <functional>
 #include <initializer_list>
 #include <memory>
 #include <string>
-#include <utility>
-#include <vector>
 
-#include "chatbot_ros/echo_guard.hpp"
 #include "chatbot_ros/states/generate_chat_completions_state.hpp"
-#include "chatbot_ros/states/interrupt_listening_state.hpp"
 #include "chatbot_ros/states/listening_fsm.hpp"
 #include "chatbot_ros/states/speak_response_state.hpp"
 #include "chatbot_ros/states/speak_state.hpp"
@@ -34,8 +29,6 @@
 #include "yasmin_viewer/yasmin_viewer_pub.hpp"
 
 namespace chatbot_ros {
-
-const char *const INTERRUPTED_OUTCOME = "interrupted";
 
 namespace {
 
@@ -47,22 +40,17 @@ public:
   RespondingConcurrence(const SpeechPipeline::SharedPtr &pipeline,
                         const yasmin::StateMap &states,
                         const std::string &default_outcome,
-                        const yasmin::OutcomeMap &outcome_map,
-                        std::vector<std::function<void()>> reset_callbacks)
+                        const yasmin::OutcomeMap &outcome_map)
       : yasmin::Concurrence(states, default_outcome, outcome_map),
-        pipeline_(pipeline), reset_callbacks_(std::move(reset_callbacks)) {}
+        pipeline_(pipeline) {}
 
   std::string execute(yasmin::Blackboard::SharedPtr blackboard) override {
     this->pipeline_->reset();
-    for (const auto &reset : this->reset_callbacks_) {
-      reset();
-    }
     return yasmin::Concurrence::execute(blackboard);
   }
 
 private:
   SpeechPipeline::SharedPtr pipeline_;
-  std::vector<std::function<void()>> reset_callbacks_;
 };
 
 } // namespace
@@ -72,17 +60,9 @@ create_responding_concurrence(const SpeechPipeline::SharedPtr &pipeline,
                               const ChatbotConfig &config,
                               const ConversationHistory::SharedPtr &history,
                               const EmbeddingMemory::SharedPtr &memory) {
-  auto echo_guard = std::make_shared<EchoGuard>();
   auto generate_state = std::make_shared<GenerateChatCompletionsState>(
       pipeline, config, history, memory);
-  auto speak_state = std::make_shared<SpeakResponseState>(pipeline, echo_guard);
-
-  // The echo guard is kept across response cycles: playback may still be
-  // buffered when a new response starts, and those buffered sentences must
-  // not be mistaken for a new interruption.
-  std::vector<std::function<void()>> resets = {
-      [speak_state]() { speak_state->reset_for_new_cycle(); },
-  };
+  auto speak_state = std::make_shared<SpeakResponseState>(pipeline);
 
   yasmin::StateMap states{{"GENERATE", generate_state}, {"SPEAK", speak_state}};
   yasmin::OutcomeMap outcomes{
@@ -96,54 +76,8 @@ create_responding_concurrence(const SpeechPipeline::SharedPtr &pipeline,
         {"SPEAK", yasmin_ros::basic_outcomes::CANCEL}}},
   };
 
-  if (config.interrupt_enabled) {
-    auto interrupt_state =
-        std::make_shared<InterruptListeningState>(config, echo_guard);
-
-    std::weak_ptr<SpeakResponseState> weak_speak = speak_state;
-    std::weak_ptr<GenerateChatCompletionsState> weak_generate = generate_state;
-    interrupt_state->set_interrupt_callback([weak_speak, weak_generate]() {
-      // Cancel the ongoing response as soon as the user speaks.
-      if (auto speak = weak_speak.lock()) {
-        speak->interrupt();
-      }
-      if (auto generate = weak_generate.lock()) {
-        generate->request_cancel();
-      }
-    });
-
-    // Stop listening as soon as the robot finished speaking (or failed).
-    std::weak_ptr<InterruptListeningState> weak_interrupt = interrupt_state;
-    speak_state->set_on_finished([weak_interrupt]() {
-      if (auto interrupt = weak_interrupt.lock()) {
-        interrupt->stop();
-      }
-    });
-
-    resets.push_back(
-        [interrupt_state]() { interrupt_state->reset_for_new_cycle(); });
-    states["INTERRUPT"] = interrupt_state;
-    outcomes.erase(yasmin_ros::basic_outcomes::SUCCEED);
-    outcomes.erase(yasmin_ros::basic_outcomes::ABORT);
-    outcomes.erase(yasmin_ros::basic_outcomes::CANCEL);
-    outcomes[INTERRUPTED_OUTCOME] = {
-        {"INTERRUPT", yasmin_ros::basic_outcomes::SUCCEED}};
-    outcomes[yasmin_ros::basic_outcomes::SUCCEED] = {
-        {"GENERATE", yasmin_ros::basic_outcomes::SUCCEED},
-        {"SPEAK", yasmin_ros::basic_outcomes::SUCCEED},
-        {"INTERRUPT", yasmin_ros::basic_outcomes::CANCEL}};
-    outcomes[yasmin_ros::basic_outcomes::ABORT] = {
-        {"GENERATE", yasmin_ros::basic_outcomes::ABORT},
-        {"INTERRUPT", yasmin_ros::basic_outcomes::CANCEL}};
-    outcomes[yasmin_ros::basic_outcomes::CANCEL] = {
-        {"GENERATE", yasmin_ros::basic_outcomes::CANCEL},
-        {"SPEAK", yasmin_ros::basic_outcomes::CANCEL},
-        {"INTERRUPT", yasmin_ros::basic_outcomes::CANCEL}};
-  }
-
   return std::make_shared<RespondingConcurrence>(
-      pipeline, states, yasmin_ros::basic_outcomes::ABORT, outcomes,
-      std::move(resets));
+      pipeline, states, yasmin_ros::basic_outcomes::ABORT, outcomes);
 }
 
 ChatBot::ChatBot()
@@ -186,7 +120,6 @@ void ChatBot::build_state_machine() {
       create_responding_concurrence(this->pipeline_, this->config_,
                                     this->history_, this->memory_),
       {{yasmin_ros::basic_outcomes::SUCCEED, "LISTENING"},
-       {INTERRUPTED_OUTCOME, "RESPONDING"},
        {yasmin_ros::basic_outcomes::ABORT, yasmin_ros::basic_outcomes::ABORT},
        {yasmin_ros::basic_outcomes::CANCEL,
         yasmin_ros::basic_outcomes::CANCEL}});

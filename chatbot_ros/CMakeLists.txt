@@ -19,14 +19,12 @@ add_library(chatbot_ros_lib
   src/chat_bot.cpp
   src/chatbot_config.cpp
   src/conversation_history.cpp
-  src/echo_guard.cpp
   src/embedding_memory.cpp
   src/text/speech_sanitizer.cpp
   src/text/text_similarity.cpp
   src/text/transcript_filter.cpp
   src/states/check_stt_state.cpp
   src/states/generate_chat_completions_state.cpp
-  src/states/interrupt_listening_state.cpp
   src/states/listen_state.cpp
   src/states/listening_fsm.cpp
   src/states/sentence_accumulator.cpp

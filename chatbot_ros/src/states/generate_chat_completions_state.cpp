@@ -39,8 +39,6 @@ GenerateChatCompletionsState::GenerateChatCompletionsState(
       pipeline_(std::move(pipeline)), config_(config),
       history_(std::move(history)), memory_(std::move(memory)) {}
 
-void GenerateChatCompletionsState::request_cancel() { this->cancel_state(); }
-
 std::string GenerateChatCompletionsState::execute(
     yasmin::Blackboard::SharedPtr blackboard) {
   {

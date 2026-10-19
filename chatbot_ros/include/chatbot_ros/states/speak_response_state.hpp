@@ -17,7 +17,6 @@
 #define CHATBOT_ROS__STATES__SPEAK_RESPONSE_STATE_HPP_
 
 #include <atomic>
-#include <functional>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -26,7 +25,6 @@
 #include <rclcpp_action/rclcpp_action.hpp>
 
 #include "audio_common_msgs/action/tts.hpp"
-#include "chatbot_ros/echo_guard.hpp"
 #include "chatbot_ros/states/speech_pipeline.hpp"
 #include "yasmin/blackboard.hpp"
 #include "yasmin/state.hpp"
@@ -35,20 +33,7 @@ namespace chatbot_ros {
 
 class SpeakResponseState : public yasmin::State {
 public:
-  using FinishedCallback = std::function<void()>;
-
-  explicit SpeakResponseState(SpeechPipeline::SharedPtr pipeline,
-                              EchoGuard::SharedPtr echo_guard = nullptr);
-
-  /// Callback invoked whenever the response cycle ends (success, abort or
-  /// cancel). Used to stop the concurrent interrupt listener.
-  void set_on_finished(FinishedCallback callback);
-
-  /// Stops speaking immediately because the user interrupted.
-  void interrupt();
-
-  /// Prepares the state for a new response cycle.
-  void reset_for_new_cycle();
+  explicit SpeakResponseState(SpeechPipeline::SharedPtr pipeline);
 
   void cancel_state() override;
 
@@ -61,11 +46,7 @@ private:
   /// Safe to call from any thread and multiple times; never throws.
   void cancel_current_goal();
 
-  void notify_finished();
-
   SpeechPipeline::SharedPtr pipeline_;
-  EchoGuard::SharedPtr echo_guard_;
-  FinishedCallback on_finished_;
   rclcpp::Node::SharedPtr node_;
   rclcpp_action::Client<audio_common_msgs::action::TTS>::SharedPtr tts_client_;
   std::mutex goal_mutex_;
@@ -73,7 +54,6 @@ private:
       rclcpp_action::ClientGoalHandle<audio_common_msgs::action::TTS>>
       current_goal_;
   std::atomic<bool> canceled_{false};
-  std::atomic<bool> interrupted_{false};
 };
 
 } // namespace chatbot_ros
