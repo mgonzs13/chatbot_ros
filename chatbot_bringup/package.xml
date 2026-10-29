@@ -8,6 +8,7 @@
     <license>GPL-3.0</license>
     <buildtool_depend>ament_cmake</buildtool_depend>
     <depend>audio_common</depend>
+    <depend>audio_aec</depend>
     <depend>llama_bringup</depend>
     <depend>whisper_bringup</depend>
     <depend>piper_bringup</depend>

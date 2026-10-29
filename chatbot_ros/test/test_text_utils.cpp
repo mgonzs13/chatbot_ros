@@ -20,11 +20,13 @@
 #include <vector>
 
 #include "chatbot_ros/conversation_history.hpp"
+#include "chatbot_ros/echo_guard.hpp"
 #include "chatbot_ros/text/speech_sanitizer.hpp"
 #include "chatbot_ros/text/text_similarity.hpp"
 #include "chatbot_ros/text/transcript_filter.hpp"
 
 using chatbot_ros::ConversationHistory;
+using chatbot_ros::EchoGuard;
 using chatbot_ros::text::SpeechSanitizer;
 using chatbot_ros::text::TranscriptFilter;
 
@@ -142,6 +144,89 @@ TEST(TextSimilarity, SubsequenceToleratesMissingAndExtraWords) {
   EXPECT_DOUBLE_EQ(chatbot_ros::text::subsequence_similarity(
                        "turn on the light", "hello, how are you"),
                    0.0);
+}
+
+TEST(EchoGuard, DetectsEchoOfSpokenSentences) {
+  EchoGuard guard;
+  guard.add_spoken_sentence("I can help you plan your day.");
+  guard.set_speaking(true);
+  EXPECT_TRUE(guard.is_echo("I can help you plan your day", 0.7));
+  // A four-word fragment is not a short current-sentence fragment.
+  EXPECT_FALSE(guard.is_echo("can help you plan", 0.7));
+  EXPECT_FALSE(guard.is_echo("turn on the light", 0.7));
+}
+
+TEST(EchoGuard, ShortFragmentsOfCurrentSentenceAreEcho) {
+  EchoGuard guard;
+  guard.add_spoken_sentence("Thanks! How can I help you today?");
+  guard.set_speaking(true);
+  EXPECT_TRUE(guard.is_echo("Thanks.", 0.8, {"no", "stop"}));
+
+  guard.add_spoken_sentence("No problem. Want to do anything else?");
+  EXPECT_TRUE(guard.is_echo("No, no.", 0.8, {"no", "stop"}));
+  EXPECT_FALSE(guard.is_echo("stop", 0.8, {"no", "stop"}));
+}
+
+TEST(EchoGuard, ShortRequestsOutsideCurrentSentenceAreNotEcho) {
+  EchoGuard guard;
+  guard.add_spoken_sentence("I can play music for you.");
+  guard.set_speaking(true);
+  EXPECT_TRUE(guard.is_echo("play music", 0.8));
+  EXPECT_FALSE(guard.is_echo("play some jazz", 0.8));
+
+  guard.add_spoken_sentence("I can turn on the lights.");
+  EXPECT_FALSE(guard.is_echo("turn on the lights", 0.8));
+}
+
+TEST(EchoGuard, IgnoresEchoWithExtraHallucinatedWords) {
+  EchoGuard guard;
+  guard.add_spoken_sentence("Sure, I can do that.");
+  guard.set_speaking(true);
+  EXPECT_TRUE(guard.is_echo("i can do that thank you", 0.65));
+  EXPECT_TRUE(guard.is_echo("i can do that thank you", 0.8));
+  EXPECT_FALSE(guard.is_echo("i can do that thank you", 0.85));
+}
+
+TEST(EchoGuard, DoesNotMatchDifferentRequests) {
+  EchoGuard guard;
+  guard.add_spoken_sentence("Sure, I can help you with that.");
+  guard.set_speaking(true);
+  EXPECT_FALSE(guard.is_echo("can you help me", 0.65));
+}
+
+TEST(EchoGuard, SingleWordFragmentsOfCurrentSentenceAreEcho) {
+  EchoGuard guard;
+  guard.add_spoken_sentence("Sure, I can do that.");
+  guard.set_speaking(true);
+  EXPECT_TRUE(guard.is_echo("Sure.", 0.65));
+
+  guard.add_spoken_sentence("I can play music for you.");
+  EXPECT_FALSE(guard.is_echo("thanks", 0.65));
+}
+
+TEST(EchoGuard, ShortSingleWordsOutsideCurrentSentenceAreNotEcho) {
+  EchoGuard guard;
+  guard.add_spoken_sentence("That is wrong.");
+  guard.set_speaking(true);
+  EXPECT_FALSE(guard.is_echo("no", 0.65));
+}
+
+TEST(EchoGuard, AlwaysWordsInterruptOutsideCurrentSentence) {
+  EchoGuard guard;
+  guard.add_spoken_sentence("Please play the music now.");
+  guard.set_speaking(true);
+  EXPECT_FALSE(guard.is_echo("stop the music", 0.65, {"stop"}));
+  EXPECT_FALSE(guard.is_echo("stop", 0.65, {"stop"}));
+
+  guard.add_spoken_sentence("Please stop the music now.");
+  EXPECT_TRUE(guard.is_echo("please stop the music now", 0.65, {"stop"}));
+}
+
+TEST(EchoGuard, ClearForgetsSentences) {
+  EchoGuard guard;
+  guard.add_spoken_sentence("Hello there robot.");
+  guard.clear();
+  EXPECT_FALSE(guard.is_echo("Hello there robot", 0.7));
 }
 
 TEST(ConversationHistory, BuildsUserAndAssistantMessages) {

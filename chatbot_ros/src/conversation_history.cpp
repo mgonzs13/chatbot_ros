@@ -46,7 +46,8 @@ ConversationHistory::messages(int max_turns) const {
     return result;
   }
 
-  // Each turn usually holds one user and one assistant message.
+  // Each turn usually holds one user and one assistant message, but
+  // interrupted turns only hold the user message, so trim by count.
   const std::size_t limit = static_cast<std::size_t>(max_turns) * 2;
   const std::size_t begin =
       (this->messages_.size() > limit) ? this->messages_.size() - limit : 0;

@@ -55,6 +55,18 @@ struct ChatbotConfig {
   /// Maximum number of user/assistant turn pairs sent back to the LLM.
   int history_max_turns{8};
 
+  /// Enable listening for user speech while the chatbot speaks
+  /// (barge-in / interruption).
+  bool interrupt_enabled{true};
+
+  /// Similarity above which a transcription is considered an echo of the
+  /// robot's own voice instead of a real interruption.
+  double interrupt_similarity_threshold{0.8};
+
+  /// Command words that always count as a real interruption when they
+  /// appear in a short transcription (e.g. "stop").
+  std::vector<std::string> interrupt_always_words;
+
   /// Enable the embeddings-based long-term memory.
   bool memory_enabled{false};
 

@@ -16,6 +16,7 @@
 #ifndef CHATBOT_ROS__STATES__GENERATE_CHAT_COMPLETIONS_STATE_HPP_
 #define CHATBOT_ROS__STATES__GENERATE_CHAT_COMPLETIONS_STATE_HPP_
 
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -43,19 +44,26 @@ public:
 
   std::string execute(yasmin::Blackboard::SharedPtr blackboard) override;
 
-private:
+  /// Cancels the in-flight generation, used when the user interrupts.
+  void request_cancel();
+
+  /// Drops buffered text and rejects callbacks from the previous cycle.
+  void begin_new_cycle();
+
+protected:
   llama_msgs::action::GenerateChatCompletions::Goal
   create_goal_handler(yasmin::Blackboard::SharedPtr blackboard);
-
-  std::string result_handler(
-      yasmin::Blackboard::SharedPtr blackboard,
-      llama_msgs::action::GenerateChatCompletions::Result::SharedPtr result);
 
   void feedback_handler(
       yasmin::Blackboard::SharedPtr blackboard,
       std::shared_ptr<
           const llama_msgs::action::GenerateChatCompletions::Feedback>
           feedback);
+
+private:
+  std::string result_handler(
+      yasmin::Blackboard::SharedPtr blackboard,
+      llama_msgs::action::GenerateChatCompletions::Result::SharedPtr result);
 
   /// System prompt plus any retrieved long-term memories.
   std::string build_system_prompt(const std::string &user_text);
@@ -67,6 +75,9 @@ private:
   std::mutex buffer_mutex_;
   SentenceAccumulator accumulator_;
   std::string current_user_text_;
+  /// Generation counter used to reject callbacks from a canceled cycle.
+  uint64_t generation_{0};
+  uint64_t goal_generation_{0};
 };
 
 } // namespace chatbot_ros

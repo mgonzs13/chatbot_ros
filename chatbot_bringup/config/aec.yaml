@@ -1,0 +1,32 @@
+# Acoustic echo cancellation for the chatbot microphone.
+#
+# The AEC node uses the fixed audio_common topics "audio", "audio_reference"
+# and "audio_clean". chatbot.launch.py remaps them to the pipeline topics:
+# /audio/in (microphone from audio_capturer), /audio/played (exact
+# post-resampled output from audio_player) and /audio/clean (consumed by
+# Silero VAD).
+/aec_node:
+  ros__parameters:
+    rate: 16000
+    format: 8  # paInt16
+    # Extra microphone delay/jitter buffer before frames are processed.
+    mic_buffer_ms: 100
+    # Silero VAD uses 32 ms frames; the VAD buffers these 20 ms chunks.
+    output_chunk_ms: 20
+    stream_delay_ms: 0
+    # Select reference audio 50 ms after the microphone timestamp. This keeps
+    # the WebRTC delay estimate away from zero and leaves jitter headroom.
+    reference_lead_ms: 50
+    # Wait this long for the reference frame whose timestamp matches the
+    # microphone frame. Normal player/transport jitter is absorbed here;
+    # longer gaps are processed as silence.
+    reference_wait_ms: 100
+    enable_high_pass: true
+    # Suppress the room-noise floor so the barge-in VAD does not fire on
+    # low-level background noise when the robot is silent.
+    enable_noise_suppression: true
+    enable_agc: false
+    # The chatbot can be silent for many seconds while the LLM and STT work.
+    # Keeping the adapted filter across those gaps avoids a fresh
+    # reconvergence period at the start of every reply.
+    reference_timeout_ms: 30000

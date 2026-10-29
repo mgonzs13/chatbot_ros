@@ -1,0 +1,18 @@
+# Silero VAD parameters for the chatbot.
+#
+# The chatbot uses the same VAD operating point as the whisper_ros defaults.
+# The AEC reference is timestamp-aligned and its output is noise-suppressed,
+# so the VAD does not need a stricter profile. If the robot still triggers on
+# its own voice, raise the threshold; if quiet user speech is missed, lower it.
+/whisper/silero_vad_node:
+  ros__parameters:
+    enabled: false
+    model_repo: "mgonzs13/silero-vad-onnx"
+    model_filename: "silero_vad.onnx"
+    model_path: ""
+    sample_rate: 16000
+    frame_size_ms: 32
+    threshold: 0.5
+    min_silence_ms: 128
+    speech_pad_ms: 32
+    use_cuda: false

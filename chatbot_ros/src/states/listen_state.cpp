@@ -51,7 +51,8 @@ std::string ListenState::execute(yasmin::Blackboard::SharedPtr blackboard) {
       return outcome;
     }
     // The whisper server rejects new goals while it is still finishing the
-    // cancellation of the previous one. Retry shortly before giving up.
+    // cancellation of the previous one, which happens right after the user
+    // interrupted the robot. Retry shortly before giving up.
     RCLCPP_DEBUG(this->node_->get_logger(),
                  "Whisper rejected the goal, retrying (%d/%d)", attempt + 1,
                  kMaxRejectedRetries);

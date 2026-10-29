@@ -22,10 +22,10 @@
 
 ## Dependencies
 
-- [yasmin](https://github.com/uleroboticsgroup/yasmin)[[6.1.2](https://github.com/uleroboticsgroup/yasmin/releases/tag/6.1.2)]
-- [audio_common](https://github.com/mgonzs13/audio_common)[[4.0.11](https://github.com/mgonzs13/audio_common/releases/tag/4.0.11)]
-- [llama_ros](https://github.com/mgonzs13/llama_ros)[[6.2.2](https://github.com/mgonzs13/llama_ros/releases/tag/6.2.2)]
-- [whisper_ros](https://github.com/mgonzs13/whisper_ros)[[4.0.10](https://github.com/mgonzs13/whisper_ros/releases/tag/4.0.10)]
+- [yasmin](https://github.com/uleroboticsgroup/yasmin)[[6.1.3](https://github.com/uleroboticsgroup/yasmin/releases/tag/6.1.3)]
+- [audio_common](https://github.com/mgonzs13/audio_common)[[4.1.0](https://github.com/mgonzs13/audio_common/releases/tag/4.1.0)]
+- [llama_ros](https://github.com/mgonzs13/llama_ros)[[6.2.3](https://github.com/mgonzs13/llama_ros/releases/tag/6.2.3)]
+- [whisper_ros](https://github.com/mgonzs13/whisper_ros)[[4.0.11](https://github.com/mgonzs13/whisper_ros/releases/tag/4.0.11)]
 - [piper_ros](https://github.com/mgonzs13/piper_ros)[[2.0.5](https://github.com/mgonzs13/piper_ros/releases/tag/2.0.5)]
 
 ## Installation
@@ -47,65 +47,61 @@ colcon build --cmake-args -DGGML_CUDA=ON
 ros2 launch chatbot_bringup chatbot.launch.py
 ```
 
-Launches Whisper (STT), llama_ros (LLM), Piper (TTS) and the chatbot
+Launches Whisper (STT), llama_ros (LLM), Piper (TTS), the AEC node and the
+chatbot.
 
 ## Features
 
+### Interruptions (barge-in)
+
+While the chatbot is generating and speaking a response it keeps listening. If the user starts talking, the ongoing response is stopped and the new request is answered, so there is no need to wait for the robot to finish speaking.
+
+The microphone is cleaned by `audio_aec/aec_node` before it reaches Silero VAD. The `audio_aec` package currently lives on the `aec` branch of `audio_common` and needs the WebRTC AudioProcessing development headers to build. The AEC node receives the microphone on `/audio/in` and the player's exact post-resampled output on `/audio/played` as its reference, and publishes `/audio/clean`. Using the player output instead of the pre-player `/audio/out` avoids making the AEC model the player's resampling and device buffering. The reference is selected by its playback timestamp (`reference_lead_ms: 50`, `reference_wait_ms: 100`), so transport jitter cannot slowly shift it away from the microphone and the AEC delay stays in a stable range. Noise suppression on the AEC output removes the room-noise floor before the VAD sees it. As a second line of defence, transcriptions that cover most of the robot's recent speech are ignored, and while the robot is speaking, short fragments made only of words from the sentence being spoken are treated as echo. This suppresses residual fragments such as "Thanks." or "No, no." without suppressing a request that uses different words.
+
+- `interrupt.similarity_threshold` (default `0.8`): lower it if the robot still interrupts itself; raise it if real interruptions are ignored.
+- `interrupt.always_words`: commands such as "stop", "wait" or "no" interrupt unless they are part of the sentence the robot is currently speaking, in which case they are treated as self-echo.
+
+The AEC tuning lives in [`chatbot_bringup/config/aec.yaml`](chatbot_bringup/config/aec.yaml), and its topics are wired with standard ROS 2 remappings in [`chatbot_bringup/launch/chatbot.launch.py`](chatbot_bringup/launch/chatbot.launch.py) (`audio`, `audio_reference` and `audio_clean` map to `/audio/in`, `/audio/played` and `/audio/clean`). The shipped config keeps the echo filter adapted between replies (`reference_timeout_ms: 30000`) instead of resetting after 500 ms of silence. `enable_noise_suppression` is enabled for the chatbot so the VAD does not fire on the room-noise floor when the robot is silent. If `mic_buffer_ms` is too small, echo remains at the start of each TTS burst; raise it (for example to 200) at the cost of extra output latency. The chatbot uses the same Silero VAD profile as the standalone `whisper_ros` defaults in [`chatbot_bringup/config/silero_vad.yaml`](chatbot_bringup/config/silero_vad.yaml) (`threshold: 0.5`, `min_silence_ms: 128`). With the AEC reference aligned by timestamp and noise suppression enabled, the original VAD settings accept a real user sample and do not self-interrupt. If self-interruption returns, raise the threshold toward `0.7`–`0.9`; if quiet user speech is missed, lower it. The chatbot launch exposes `aec_params_file`, `vad_audio_topic`, and `silero_vad_params_file`; their defaults select `aec.yaml`, `/audio/clean`, and the chatbot VAD profile.
+
 ### Conversation memory
 
-- **Short-term memory:** the most recent turns (`history.max_turns`) are sent
-  back to the LLM with every request, so the chatbot remembers the ongoing
-  conversation.
-- **Long-term memory (optional):** past turns are embedded with a
-  `llama_ros` embedding model and stored in a small vector database on disk
-  (`$HOME/.cache/chatbot_ros/memory.json`). The most similar memories are
-  injected into the system prompt of new requests. Enable it with:
+- **Short-term memory:** the most recent turns (`history.max_turns`) are sent back to the LLM with every request, so the chatbot remembers the ongoing conversation.
+- **Long-term memory (optional):** past turns are embedded with a `llama_ros` embedding model and stored in a small vector database on disk (`$HOME/.cache/chatbot_ros/memory.json`). The most similar memories are injected into the system prompt of new requests. Enable it with:
 
 ```shell
 ros2 launch chatbot_bringup chatbot.launch.py memory:=true
 ```
 
-This launches a second `llama_ros` node (`embedding.yaml`, bge-base-en-v1.5)
-in the `embedding` namespace. The model is downloaded on the first run. The
-memory is best-effort: if the embeddings service is not reachable the chatbot
-keeps working without long-term memory.
+This launches a second `llama_ros` node (`embedding.yaml`, bge-base-en-v1.5) in the `embedding` namespace. The model is downloaded on the first run. The memory is best-effort: if the embeddings service is not reachable the chatbot keeps working without long-term memory.
 
 ### Voice-friendly answers
 
 - The system prompt is fully configurable and can be loaded from a file.
-- Responses are sanitized before being spoken: markdown (bold, lists,
-  headings, code blocks, tables), emoji, links and other non-natural text are
-  removed so the TTS only says natural language.
-- Whisper transcriptions are filtered: non-speech annotations such as
-  `[BLANK_AUDIO]`, `(music)`, `♪ ... ♪` and hallucinated phrases
-  ("Thank you for watching!") are discarded and the chatbot asks the user to
-  repeat instead.
+- Responses are sanitized before being spoken: markdown (bold, lists, headings, code blocks, tables), emoji, links and other non-natural text are removed so the TTS only says natural language.
+- Whisper transcriptions are filtered: non-speech annotations such as `[BLANK_AUDIO]`, `(music)`, `♪ ... ♪` and hallucinated phrase ("Thank you for watching!") are discarded and the chatbot asks the user to repeat instead.
 
 ## Configuration
 
-All parameters live in
-[`chatbot_bringup/config/chatbot.yaml`](chatbot_bringup/config/chatbot.yaml)
-and can be overridden at launch (e.g.
-`ros2 launch chatbot_bringup chatbot.launch.py` after editing the file).
+All parameters live in [`chatbot_bringup/config/chatbot.yaml`](chatbot_bringup/config/chatbot.yaml) and can be overridden at launch (e.g. `ros2 launch chatbot_bringup chatbot.launch.py` after editing the file, or `--ros-args -p interrupt.enabled:=false` on the node).
 
-| Parameter                     | Type     | Default                          | Description                                                         |
-| ----------------------------- | -------- | -------------------------------- | ------------------------------------------------------------------- |
-| `messages.greeting`           | string   | `"Hi, how can I help you?"`      | Message spoken at startup (empty disables the greeting)             |
-| `messages.system_prompt`      | string   | voice-oriented prompt            | System prompt sent with every request (empty disables it)           |
-| `messages.system_prompt_file` | string   | `""`                             | Load the system prompt from this file when `system_prompt` is empty |
-| `messages.retry_messages`     | string[] | 3 messages                       | Spoken in round-robin when no speech was recognized                 |
-| `stt.prompt`                  | string   | `""`                             | Initial prompt passed to Whisper                                    |
-| `stt.ignored_phrases`         | string[] | hallucination phrases            | Transcriptions containing these are treated as noise                |
-| `llm.temperature`             | double   | `0.4`                            | Sampling temperature for the chat completions                       |
-| `history.max_turns`           | int      | `8`                              | User/assistant turn pairs kept in the short-term memory             |
-| `memory.enabled`              | bool     | `false`                          | Enable the embeddings-based long-term memory                        |
-| `memory.service`              | string   | `/embedding/generate_embeddings` | Embeddings service used by the long-term memory                     |
-| `memory.storage_file`         | string   | `$HOME/.cache/chatbot_ros/...`   | JSON file where memories are persisted                              |
-| `memory.retrieve_k`           | int      | `3`                              | Number of memories injected into the system prompt                  |
-| `memory.min_similarity`       | double   | `0.55`                           | Minimum cosine similarity for a memory to be retrieved              |
-| `memory.max_entries`          | int      | `512`                            | Maximum number of memories kept on disk                             |
+| Parameter                        | Type     | Default                          | Description                                                          |
+| -------------------------------- | -------- | -------------------------------- | -------------------------------------------------------------------- |
+| `messages.greeting`              | string   | `"Hi, how can I help you?"`      | Message spoken at startup (empty disables the greeting)              |
+| `messages.system_prompt`         | string   | voice-oriented prompt            | System prompt sent with every request (empty disables it)            |
+| `messages.system_prompt_file`    | string   | `""`                             | Load the system prompt from this file when `system_prompt` is empty  |
+| `messages.retry_messages`        | string[] | 3 messages                       | Spoken in round-robin when no speech was recognized                  |
+| `stt.prompt`                     | string   | `""`                             | Initial prompt passed to Whisper                                     |
+| `stt.ignored_phrases`            | string[] | hallucination phrases            | Transcriptions containing these are treated as noise                 |
+| `llm.temperature`                | double   | `0.4`                            | Sampling temperature for the chat completions                        |
+| `history.max_turns`              | int      | `8`                              | User/assistant turn pairs kept in the short-term memory              |
+| `interrupt.enabled`              | bool     | `true`                           | Listen for user speech while speaking                                |
+| `interrupt.similarity_threshold` | double   | `0.8`                            | Echo similarity above which an interruption is ignored               |
+| `interrupt.always_words`         | string[] | stop, wait, quiet, cancel, ...   | Commands that interrupt unless they are part of the current sentence |
+| `memory.enabled`                 | bool     | `false`                          | Enable the embeddings-based long-term memory                         |
+| `memory.service`                 | string   | `/embedding/generate_embeddings` | Embeddings service used by the long-term memory                      |
+| `memory.storage_file`            | string   | `$HOME/.cache/chatbot_ros/...`   | JSON file where memories are persisted                               |
+| `memory.retrieve_k`              | int      | `3`                              | Number of memories injected into the system prompt                   |
+| `memory.min_similarity`          | double   | `0.55`                           | Minimum cosine similarity for a memory to be retrieved               |
+| `memory.max_entries`             | int      | `512`                            | Maximum number of memories kept on disk                              |
 
-The language model and its context length are configured in
-[`chatbot_bringup/config/llama.yaml`](chatbot_bringup/config/llama.yaml).
-The embedding model used by the long-term memory is configured in
-[`chatbot_bringup/config/embedding.yaml`](chatbot_bringup/config/embedding.yaml).
+The language model and its context length are configured in [`chatbot_bringup/config/llama.yaml`](chatbot_bringup/config/llama.yaml). The acoustic echo canceller is configured in [`chatbot_bringup/config/aec.yaml`](chatbot_bringup/config/aec.yaml). The embedding model used by the long-term memory is configured in [`chatbot_bringup/config/embedding.yaml`](chatbot_bringup/config/embedding.yaml).

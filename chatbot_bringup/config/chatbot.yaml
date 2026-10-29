@@ -6,7 +6,6 @@
       greeting: "Hi, how can I help you?"
       system_prompt: |-
         You are a friendly robot assistant that talks with people out loud. Follow these rules at all times:
-        - Keep every answer short and natural, one or two sentences.
         - Use plain spoken language. Never use markdown, bullet points, emojis, code blocks, tables or any other formatting.
         - If you do not know something, say it briefly instead of making things up.
         - Reply in the same language the user is speaking.
@@ -40,6 +39,27 @@
     # Short-term memory: recent turns sent back to the LLM.
     history:
       max_turns: 8
+
+    # Listening while speaking (barge-in). The user can interrupt the robot
+    # by talking; the response is stopped and the new request is answered.
+    # The microphone is echo-cancelled by audio_aec before Silero VAD, and
+    # transcriptions that cover most of the robot's recent speech are ignored
+    # as a second line of defence. Short fragments of the sentence currently
+    # being spoken are also ignored. Command words that are not part of that
+    # sentence still interrupt.
+    interrupt:
+      enabled: true
+      # Lower this if the robot still interrupts itself; raise it if real
+      # interruptions are ignored.
+      similarity_threshold: 0.8
+      always_words:
+        - "stop"
+        - "wait"
+        - "quiet"
+        - "cancel"
+        - "pause"
+        - "enough"
+        - "no"
 
     # Long-term memory (retrieval augmented generation). Requires a second
     # llama_ros node running an embedding model; launch it with

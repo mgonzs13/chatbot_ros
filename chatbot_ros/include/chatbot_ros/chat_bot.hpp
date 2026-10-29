@@ -28,6 +28,10 @@
 
 namespace chatbot_ros {
 
+/// Outcome of the responding concurrence when the user interrupted the
+/// robot while it was speaking.
+extern const char *const INTERRUPTED_OUTCOME;
+
 yasmin::Concurrence::SharedPtr create_responding_concurrence(
     const SpeechPipeline::SharedPtr &pipeline,
     const ChatbotConfig &config = ChatbotConfig(),

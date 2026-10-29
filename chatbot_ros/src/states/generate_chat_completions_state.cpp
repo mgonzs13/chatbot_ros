@@ -39,12 +39,17 @@ GenerateChatCompletionsState::GenerateChatCompletionsState(
       pipeline_(std::move(pipeline)), config_(config),
       history_(std::move(history)), memory_(std::move(memory)) {}
 
+void GenerateChatCompletionsState::request_cancel() { this->cancel_state(); }
+
+void GenerateChatCompletionsState::begin_new_cycle() {
+  std::lock_guard<std::mutex> lock(this->buffer_mutex_);
+  ++this->generation_;
+  this->accumulator_.clear();
+}
+
 std::string GenerateChatCompletionsState::execute(
     yasmin::Blackboard::SharedPtr blackboard) {
-  {
-    std::lock_guard<std::mutex> lock(this->buffer_mutex_);
-    this->accumulator_.clear();
-  }
+  this->begin_new_cycle();
 
   std::string outcome;
   try {
@@ -87,6 +92,11 @@ GenerateChatCompletionsState::create_goal_handler(
     yasmin::Blackboard::SharedPtr blackboard) {
   llama_msgs::action::GenerateChatCompletions::Goal goal;
 
+  {
+    std::lock_guard<std::mutex> lock(this->buffer_mutex_);
+    this->goal_generation_ = this->generation_;
+  }
+
   this->current_user_text_ = blackboard->get<std::string>("stt");
 
   const std::string system_prompt =
@@ -122,22 +132,18 @@ std::string GenerateChatCompletionsState::result_handler(
     yasmin::Blackboard::SharedPtr blackboard,
     llama_msgs::action::GenerateChatCompletions::Result::SharedPtr result) {
   (void)blackboard;
+  std::lock_guard<std::mutex> lock(this->buffer_mutex_);
+  if (this->generation_ != this->goal_generation_) {
+    return yasmin_ros::basic_outcomes::SUCCEED;
+  }
+
   const std::string content =
       result->choices.empty() ? "" : result->choices[0].message.content;
-  const std::string spoken = text::SpeechSanitizer::sanitize(content);
 
   RCLCPP_INFO(this->node_->get_logger(), "%s", content.c_str());
   RCLCPP_INFO(this->node_->get_logger(), "Total tokens: %d",
               result->usage.total_tokens);
 
-  if (this->history_ && !spoken.empty()) {
-    this->history_->add_assistant_message(spoken);
-  }
-  if (this->memory_ && !spoken.empty()) {
-    this->memory_->remember_turn(this->current_user_text_, spoken);
-  }
-
-  std::lock_guard<std::mutex> lock(this->buffer_mutex_);
   auto leftover = this->accumulator_.flush();
   if (leftover.has_value()) {
     const std::string cleaned = text::SpeechSanitizer::sanitize(*leftover);
@@ -154,6 +160,10 @@ void GenerateChatCompletionsState::feedback_handler(
         feedback) {
   (void)blackboard;
   std::lock_guard<std::mutex> lock(this->buffer_mutex_);
+  if (this->generation_ != this->goal_generation_) {
+    return;
+  }
+
   for (const auto &choice : feedback->choices) {
     if (choice.delta.content.empty()) {
       continue;
