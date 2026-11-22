@@ -14,7 +14,7 @@ repositories:
   whisper_ros:
     type: git
     url: https://github.com/mgonzs13/whisper_ros
-    version: tags/4.0.11
+    version: tags/4.0.12
   piper_ros:
     type: git
     url: https://github.com/mgonzs13/piper_ros
